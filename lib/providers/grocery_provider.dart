@@ -209,11 +209,13 @@ class GroceryProvider extends ChangeNotifier {
     final now = DateTime.now();
     final checkedItems = selectedList!.items.where((item) => item.done).toList();
     
-    // Add to purchase history
+    // Add to purchase history with price and category
     for (final item in checkedItems) {
       _purchaseHistory.add(Purchase(
         itemName: item.name.toLowerCase().trim(),
         boughtAt: now,
+        price: item.price,
+        category: item.category,
       ));
     }
     
@@ -291,20 +293,14 @@ class GroceryProvider extends ChangeNotifier {
     
     double total = 0.0;
     
-    // Get all purchases this month
+    // Get all purchases this month and sum their prices
     final thisMonthPurchases = _purchaseHistory
         .where((p) => p.boughtAt.isAfter(firstDayOfMonth))
         .toList();
     
-    // Find corresponding items in all lists to get prices
     for (final purchase in thisMonthPurchases) {
-      for (final list in _lists) {
-        for (final item in list.items) {
-          if (item.name.toLowerCase().trim() == purchase.itemName && item.price != null) {
-            total += item.price!;
-            break;
-          }
-        }
+      if (purchase.price != null) {
+        total += purchase.price!;
       }
     }
     
@@ -318,20 +314,15 @@ class GroceryProvider extends ChangeNotifier {
     
     final Map<String, double> categoryTotals = {};
     
-    // Get all purchases this month
+    // Get all purchases this month and group by category
     final thisMonthPurchases = _purchaseHistory
         .where((p) => p.boughtAt.isAfter(firstDayOfMonth))
         .toList();
     
-    // Find corresponding items in all lists to get prices and categories
     for (final purchase in thisMonthPurchases) {
-      for (final list in _lists) {
-        for (final item in list.items) {
-          if (item.name.toLowerCase().trim() == purchase.itemName && item.price != null) {
-            categoryTotals[item.category] = (categoryTotals[item.category] ?? 0.0) + item.price!;
-            break;
-          }
-        }
+      if (purchase.price != null) {
+        categoryTotals[purchase.category] = 
+            (categoryTotals[purchase.category] ?? 0.0) + purchase.price!;
       }
     }
     
