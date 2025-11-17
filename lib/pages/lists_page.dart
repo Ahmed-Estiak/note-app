@@ -90,7 +90,12 @@ class ListsPage extends StatelessWidget {
                             showModalBottomSheet(
                               context: context,
                               isScrollControlled: true,
-                              builder: (context) => const SuggestionsSheet(),
+                              builder: (sheetContext) => SuggestionsSheet(
+                                onItemAdded: (itemName) {
+                                  // Show overlay notification (appears on top of everything)
+                                  _showOverlayNotification(context, itemName);
+                                },
+                              ),
                             );
                           },
                           icon: const Icon(Icons.lightbulb_outline),
@@ -168,6 +173,62 @@ class ListsPage extends StatelessWidget {
         );
       }
     }
+  }
+
+  void _showOverlayNotification(BuildContext context, String itemName) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+    
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        //top: MediaQuery.of(context).padding.top + 80,
+        
+        top: MediaQuery.of(context).size.height * 0.95,  // Position 30% from the top
+        left: 16,
+        right: 16,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.green.shade700,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Added $itemName',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    
+    overlay.insert(overlayEntry);
+    
+    // Remove after 1.5 seconds
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      overlayEntry.remove();
+    });
   }
 }
 
