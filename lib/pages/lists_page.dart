@@ -159,9 +159,11 @@ class ListsPage extends StatelessWidget {
       await provider.completeShopping();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Shopping trip completed!'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: const Text('Shopping trip completed!'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.green.shade700,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }

@@ -88,6 +88,8 @@ class SuggestionsSheet extends StatelessWidget {
                             SnackBar(
                               content: Text('Added ${newItem.name} to list'),
                               duration: const Duration(seconds: 2),
+                              backgroundColor: Colors.green.shade700,
+                              behavior: SnackBarBehavior.floating,
                             ),
                           );
                         }
