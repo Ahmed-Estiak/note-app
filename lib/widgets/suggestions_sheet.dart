@@ -5,14 +5,29 @@ import '../models/grocery_item.dart';
 import '../providers/grocery_provider.dart';
 
 class SuggestionsSheet extends StatelessWidget {
+  final String noteId;
   final Function(String itemName)? onItemAdded;
   
-  const SuggestionsSheet({super.key, this.onItemAdded});
+  const SuggestionsSheet({
+    super.key,
+    required this.noteId,
+    this.onItemAdded,
+  });
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<GroceryProvider>();
-    final suggestions = provider.predictedItemNames(limit: 8);
+    final suggestions = provider.predictedItemNamesForNote(limit: 8);
+    
+    // Filter out items already in this note
+    final note = provider.getNote(noteId);
+    final existingItemNames = note?.items
+        .map((item) => item.name.toLowerCase().trim())
+        .toSet() ?? {};
+    
+    final filteredSuggestions = suggestions
+        .where((suggestion) => !existingItemNames.contains(suggestion))
+        .toList();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -37,7 +52,7 @@ class SuggestionsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           
-          if (suggestions.isEmpty)
+          if (filteredSuggestions.isEmpty)
             Padding(
               padding: const EdgeInsets.all(32),
               child: Column(
@@ -64,9 +79,9 @@ class SuggestionsSheet extends StatelessWidget {
           else
             ListView.builder(
               shrinkWrap: true,
-              itemCount: suggestions.length,
+              itemCount: filteredSuggestions.length,
               itemBuilder: (context, index) {
-                final itemName = suggestions[index];
+                final itemName = filteredSuggestions[index];
                 return Card(
                   child: ListTile(
                     leading: const Icon(Icons.add_shopping_cart),
@@ -78,12 +93,12 @@ class SuggestionsSheet extends StatelessWidget {
                       icon: const Icon(Icons.add_circle),
                       color: Theme.of(context).colorScheme.primary,
                       onPressed: () async {
-                        // Add suggested item to list
+                        // Add suggested item to note
                         final newItem = GroceryItem(
                           id: const Uuid().v4(),
                           name: itemName[0].toUpperCase() + itemName.substring(1),
                         );
-                        await provider.addItem(newItem);
+                        await provider.addItemToNote(noteId, newItem);
                         
                         // Call the callback to show snackbar in parent context
                         onItemAdded?.call(newItem.name);

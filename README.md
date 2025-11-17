@@ -4,11 +4,18 @@ A Flutter Web MVP for managing grocery lists with intelligent predictions and ex
 
 ## Features
 
-### 🛒 Grocery List Manager
-- Create and manage multiple grocery lists
-- Add, edit, and delete items
+### 📝 Note-Based Organization
+- Create multiple categories (Weekly, Monthly, etc.)
+- Each category contains multiple notes
+- Each note has a title and bullet-pointed items
+- Organize your shopping by different trips or stores
+
+### 🛒 Smart Item Management
+- Type and press Enter to add items quickly
+- Inline editing - click on text to edit directly
+- Edit button for detailed info (price, category, expiry)
+- Delete button appears next to each item
 - Check/uncheck items with strike-through styling
-- Default "Weekly" list created automatically
 
 ### 🔮 Smart Predictions
 - Purchase history tracking
