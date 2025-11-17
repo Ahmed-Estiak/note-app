@@ -18,8 +18,11 @@ class GroceryItem {
   // Check if item is expiring soon (within 3 days)
   bool get isExpiringSoon {
     if (expiry == null) return false;
+    // Compare dates only (ignore time)
     final now = DateTime.now();
-    final difference = expiry!.difference(now);
+    final today = DateTime(now.year, now.month, now.day);
+    final expiryDate = DateTime(expiry!.year, expiry!.month, expiry!.day);
+    final difference = expiryDate.difference(today);
     return difference.inDays >= 0 && difference.inDays <= 3;
   }
 

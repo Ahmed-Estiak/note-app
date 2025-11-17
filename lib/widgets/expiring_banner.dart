@@ -39,7 +39,12 @@ class ExpiringBanner extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             ...expiringItems.map((item) {
-              final daysUntilExpiry = item.expiry!.difference(DateTime.now()).inDays;
+              // Compare dates only (ignore time)
+              final now = DateTime.now();
+              final today = DateTime(now.year, now.month, now.day);
+              final expiryDate = DateTime(item.expiry!.year, item.expiry!.month, item.expiry!.day);
+              final daysUntilExpiry = expiryDate.difference(today).inDays;
+              
               final expiryText = daysUntilExpiry == 0 
                   ? 'Today' 
                   : daysUntilExpiry == 1
