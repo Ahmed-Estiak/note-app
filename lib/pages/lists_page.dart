@@ -169,6 +169,11 @@ class ListsPage extends StatelessWidget {
             duration: const Duration(seconds: 2),
             backgroundColor: Colors.green.shade700,
             behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(
+              bottom: 75,
+              left: 16,
+              right: 16,
+            ),
           ),
         );
       }
