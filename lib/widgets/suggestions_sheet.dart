@@ -83,13 +83,19 @@ class SuggestionsSheet extends StatelessWidget {
                         );
                         await provider.addItem(newItem);
                         
+                        // Show snackbar using root context (appears above bottom sheet)
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Added ${newItem.name} to list'),
-                              duration: const Duration(seconds: 2),
+                              content: Text('✓ Added ${newItem.name}'),
+                              duration: const Duration(seconds: 1),
                               backgroundColor: Colors.green.shade700,
                               behavior: SnackBarBehavior.floating,
+                              margin: const EdgeInsets.only(
+                                bottom: 500, // Position above the bottom sheet
+                                left: 16,
+                                right: 16,
+                              ),
                             ),
                           );
                         }
