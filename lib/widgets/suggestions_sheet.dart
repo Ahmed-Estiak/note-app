@@ -98,7 +98,7 @@ class SuggestionsSheet extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 60),
         ],
       ),
     );

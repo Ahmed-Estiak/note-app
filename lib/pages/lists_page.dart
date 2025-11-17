@@ -183,7 +183,7 @@ class ListsPage extends StatelessWidget {
       builder: (context) => Positioned(
         //top: MediaQuery.of(context).padding.top + 80,
         
-        top: MediaQuery.of(context).size.height * 0.95,  // Position 30% from the top
+        top: MediaQuery.of(context).size.height * 0.93,  // Position 30% from the top
         left: 16,
         right: 16,
         child: Material(
