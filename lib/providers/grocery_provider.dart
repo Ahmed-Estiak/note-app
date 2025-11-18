@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../models/grocery_item.dart';
 import '../models/grocery_list.dart';
-import '../models/note.dart';
 import '../models/purchase.dart';
 
 class GroceryProvider extends ChangeNotifier {
@@ -143,202 +142,100 @@ class GroceryProvider extends ChangeNotifier {
     await save();
   }
 
-  // ===== NOTE METHODS =====
+  // ===== ITEM METHODS =====
 
-  // Get all notes for a specific list
-  List<Note> getNotesForList(String listId) {
-    try {
-      final list = _lists.firstWhere((l) => l.id == listId);
-      return list.notes;
-    } catch (e) {
-      return [];
-    }
-  }
+  // Add item to selected list
+  Future<void> addItem(GroceryItem item) async {
+    if (_selectedListId == null) return;
+    
+    final listIndex = _lists.indexWhere((list) => list.id == _selectedListId);
+    if (listIndex == -1) return;
 
-  // Get a specific note by ID
-  Note? getNote(String noteId) {
-    for (final list in _lists) {
-      try {
-        return list.notes.firstWhere((note) => note.id == noteId);
-      } catch (e) {
-        continue;
-      }
-    }
-    return null;
-  }
-
-  // Create a new note in a list
-  Future<String> createNote(String listId) async {
-    final listIndex = _lists.indexWhere((list) => list.id == listId);
-    if (listIndex == -1) return '';
-
-    final newNote = Note(
-      id: _uuid.v4(),
-      title: '',
-      categoryId: listId,
-    );
-
-    final updatedNotes = [..._lists[listIndex].notes, newNote];
-    _lists[listIndex] = _lists[listIndex].copyWith(notes: updatedNotes);
+    final updatedItems = [..._lists[listIndex].items, item];
+    _lists[listIndex] = _lists[listIndex].copyWith(items: updatedItems);
 
     notifyListeners();
     await save();
-    return newNote.id;
   }
 
-  // Update note title
-  Future<void> updateNoteTitle(String noteId, String title) async {
-    for (int i = 0; i < _lists.length; i++) {
-      final noteIndex = _lists[i].notes.indexWhere((note) => note.id == noteId);
-      if (noteIndex != -1) {
-        final updatedNote = _lists[i].notes[noteIndex].copyWith(title: title);
-        final updatedNotes = List<Note>.from(_lists[i].notes);
-        updatedNotes[noteIndex] = updatedNote;
-        _lists[i] = _lists[i].copyWith(notes: updatedNotes);
-        
-        notifyListeners();
-        await save();
-        return;
-      }
+  // Update item in selected list
+  Future<void> updateItem(String itemId, GroceryItem updatedItem) async {
+    if (_selectedListId == null) return;
+    
+    final listIndex = _lists.indexWhere((list) => list.id == _selectedListId);
+    if (listIndex == -1) return;
+
+    final updatedItems = _lists[listIndex].items.map((item) {
+      return item.id == itemId ? updatedItem : item;
+    }).toList();
+
+    _lists[listIndex] = _lists[listIndex].copyWith(items: updatedItems);
+
+    notifyListeners();
+    await save();
+  }
+
+  // Delete item from selected list
+  Future<void> deleteItem(String itemId) async {
+    if (_selectedListId == null) return;
+    
+    final listIndex = _lists.indexWhere((list) => list.id == _selectedListId);
+    if (listIndex == -1) return;
+
+    final updatedItems = _lists[listIndex].items.where((item) => item.id != itemId).toList();
+    _lists[listIndex] = _lists[listIndex].copyWith(items: updatedItems);
+
+    notifyListeners();
+    await save();
+  }
+
+  // Toggle item done status
+  Future<void> toggleItemDone(String itemId) async {
+    if (_selectedListId == null) return;
+    
+    final listIndex = _lists.indexWhere((list) => list.id == _selectedListId);
+    if (listIndex == -1) return;
+
+    final updatedItems = _lists[listIndex].items.map((item) {
+      return item.id == itemId ? item.copyWith(done: !item.done) : item;
+    }).toList();
+
+    _lists[listIndex] = _lists[listIndex].copyWith(items: updatedItems);
+
+    notifyListeners();
+    await save();
+  }
+
+  // Complete shopping for selected list
+  Future<void> completeShopping() async {
+    if (_selectedListId == null) return;
+    
+    final listIndex = _lists.indexWhere((list) => list.id == _selectedListId);
+    if (listIndex == -1) return;
+
+    final now = DateTime.now();
+    final checkedItems = _lists[listIndex].items.where((item) => item.done).toList();
+    
+    // Add to purchase history with price and category
+    for (final item in checkedItems) {
+      _purchaseHistory.add(Purchase(
+        itemName: item.name.toLowerCase().trim(),
+        boughtAt: now,
+        price: item.price,
+        category: item.category,
+      ));
     }
+    
+    // Remove checked items from list
+    final remainingItems = _lists[listIndex].items.where((item) => !item.done).toList();
+    _lists[listIndex] = _lists[listIndex].copyWith(items: remainingItems);
+    
+    notifyListeners();
+    await save();
   }
 
-  // Add item to note
-  Future<void> addItemToNote(String noteId, GroceryItem item) async {
-    for (int i = 0; i < _lists.length; i++) {
-      final noteIndex = _lists[i].notes.indexWhere((note) => note.id == noteId);
-      if (noteIndex != -1) {
-        final note = _lists[i].notes[noteIndex];
-        final updatedItems = [...note.items, item];
-        final updatedNote = note.copyWith(items: updatedItems);
-        
-        final updatedNotes = List<Note>.from(_lists[i].notes);
-        updatedNotes[noteIndex] = updatedNote;
-        _lists[i] = _lists[i].copyWith(notes: updatedNotes);
-        
-        notifyListeners();
-        await save();
-        return;
-      }
-    }
-  }
-
-  // Update item in note
-  Future<void> updateItemInNote(String noteId, String itemId, GroceryItem updatedItem) async {
-    for (int i = 0; i < _lists.length; i++) {
-      final noteIndex = _lists[i].notes.indexWhere((note) => note.id == noteId);
-      if (noteIndex != -1) {
-        final note = _lists[i].notes[noteIndex];
-        final updatedItems = note.items.map((item) {
-          return item.id == itemId ? updatedItem : item;
-        }).toList();
-        
-        final updatedNote = note.copyWith(items: updatedItems);
-        final updatedNotes = List<Note>.from(_lists[i].notes);
-        updatedNotes[noteIndex] = updatedNote;
-        _lists[i] = _lists[i].copyWith(notes: updatedNotes);
-        
-        notifyListeners();
-        await save();
-        return;
-      }
-    }
-  }
-
-  // Delete item from note
-  Future<void> deleteItemFromNote(String noteId, String itemId) async {
-    for (int i = 0; i < _lists.length; i++) {
-      final noteIndex = _lists[i].notes.indexWhere((note) => note.id == noteId);
-      if (noteIndex != -1) {
-        final note = _lists[i].notes[noteIndex];
-        final updatedItems = note.items.where((item) => item.id != itemId).toList();
-        
-        final updatedNote = note.copyWith(items: updatedItems);
-        final updatedNotes = List<Note>.from(_lists[i].notes);
-        updatedNotes[noteIndex] = updatedNote;
-        _lists[i] = _lists[i].copyWith(notes: updatedNotes);
-        
-        notifyListeners();
-        await save();
-        return;
-      }
-    }
-  }
-
-  // Toggle item done status in note
-  Future<void> toggleItemDoneInNote(String noteId, String itemId) async {
-    for (int i = 0; i < _lists.length; i++) {
-      final noteIndex = _lists[i].notes.indexWhere((note) => note.id == noteId);
-      if (noteIndex != -1) {
-        final note = _lists[i].notes[noteIndex];
-        final updatedItems = note.items.map((item) {
-          return item.id == itemId ? item.copyWith(done: !item.done) : item;
-        }).toList();
-        
-        final updatedNote = note.copyWith(items: updatedItems);
-        final updatedNotes = List<Note>.from(_lists[i].notes);
-        updatedNotes[noteIndex] = updatedNote;
-        _lists[i] = _lists[i].copyWith(notes: updatedNotes);
-        
-        notifyListeners();
-        await save();
-        return;
-      }
-    }
-  }
-
-  // Delete a note
-  Future<void> deleteNote(String noteId) async {
-    for (int i = 0; i < _lists.length; i++) {
-      final noteIndex = _lists[i].notes.indexWhere((note) => note.id == noteId);
-      if (noteIndex != -1) {
-        final updatedNotes = List<Note>.from(_lists[i].notes);
-        updatedNotes.removeAt(noteIndex);
-        _lists[i] = _lists[i].copyWith(notes: updatedNotes);
-        
-        notifyListeners();
-        await save();
-        return;
-      }
-    }
-  }
-
-  // Complete shopping for a specific note
-  Future<void> completeShoppingForNote(String noteId) async {
-    for (int i = 0; i < _lists.length; i++) {
-      final noteIndex = _lists[i].notes.indexWhere((note) => note.id == noteId);
-      if (noteIndex != -1) {
-        final note = _lists[i].notes[noteIndex];
-        final now = DateTime.now();
-        final checkedItems = note.items.where((item) => item.done).toList();
-        
-        // Add to purchase history with price and category
-        for (final item in checkedItems) {
-          _purchaseHistory.add(Purchase(
-            itemName: item.name.toLowerCase().trim(),
-            boughtAt: now,
-            price: item.price,
-            category: item.category,
-          ));
-        }
-        
-        // Remove checked items from note
-        final remainingItems = note.items.where((item) => !item.done).toList();
-        final updatedNote = note.copyWith(items: remainingItems);
-        
-        final updatedNotes = List<Note>.from(_lists[i].notes);
-        updatedNotes[noteIndex] = updatedNote;
-        _lists[i] = _lists[i].copyWith(notes: updatedNotes);
-        
-        notifyListeners();
-        await save();
-        return;
-      }
-    }
-  }
-
-  // Get predicted items for a specific note
-  List<String> predictedItemNamesForNote({int limit = 8}) {
+  // Get predicted items
+  List<String> predictedItemNames({int limit = 8}) {
     if (_purchaseHistory.isEmpty) return [];
     
     // Group purchases by item name
@@ -379,11 +276,14 @@ class GroceryProvider extends ChangeNotifier {
     return suggestions;
   }
 
-  // Get items expiring soon for a specific note
-  List<GroceryItem> getExpiringSoonItemsForNote(String noteId) {
-    final note = getNote(noteId);
-    if (note == null) return [];
-    return note.items
+  // Get items expiring soon from selected list
+  List<GroceryItem> getExpiringSoonItems() {
+    if (_selectedListId == null) return [];
+    
+    final list = selectedList;
+    if (list == null) return [];
+    
+    return list.items
         .where((item) => item.isExpiringSoon && !item.done)
         .toList();
   }

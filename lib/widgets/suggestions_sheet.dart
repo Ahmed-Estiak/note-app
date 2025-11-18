@@ -5,23 +5,21 @@ import '../models/grocery_item.dart';
 import '../providers/grocery_provider.dart';
 
 class SuggestionsSheet extends StatelessWidget {
-  final String noteId;
   final Function(String itemName)? onItemAdded;
   
   const SuggestionsSheet({
     super.key,
-    required this.noteId,
     this.onItemAdded,
   });
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<GroceryProvider>();
-    final suggestions = provider.predictedItemNamesForNote(limit: 8);
+    final suggestions = provider.predictedItemNames(limit: 8);
     
-    // Filter out items already in this note
-    final note = provider.getNote(noteId);
-    final existingItemNames = note?.items
+    // Filter out items already in selected list
+    final selectedList = provider.selectedList;
+    final existingItemNames = selectedList?.items
         .map((item) => item.name.toLowerCase().trim())
         .toSet() ?? {};
     
@@ -93,12 +91,12 @@ class SuggestionsSheet extends StatelessWidget {
                       icon: const Icon(Icons.add_circle),
                       color: Theme.of(context).colorScheme.primary,
                       onPressed: () async {
-                        // Add suggested item to note
+                        // Add suggested item to selected list
                         final newItem = GroceryItem(
                           id: const Uuid().v4(),
                           name: itemName[0].toUpperCase() + itemName.substring(1),
                         );
-                        await provider.addItemToNote(noteId, newItem);
+                        await provider.addItem(newItem);
                         
                         // Call the callback to show snackbar in parent context
                         onItemAdded?.call(newItem.name);

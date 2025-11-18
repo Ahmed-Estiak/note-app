@@ -4,11 +4,10 @@ A Flutter Web MVP for managing grocery lists with intelligent predictions and ex
 
 ## Features
 
-### 📝 Note-Based Organization
+### 📝 Category-Based Organization
 - Create multiple categories (Weekly, Monthly, etc.)
-- Each category contains multiple notes
-- Each note has a title and bullet-pointed items
-- Organize your shopping by different trips or stores
+- Each category contains bullet-pointed items directly
+- Simple and straightforward structure
 
 ### 🛒 Smart Item Management
 - Type and press Enter to add items quickly
@@ -16,6 +15,7 @@ A Flutter Web MVP for managing grocery lists with intelligent predictions and ex
 - Edit button for detailed info (price, category, expiry)
 - Delete button appears next to each item
 - Check/uncheck items with strike-through styling
+- Edit/delete buttons hide during inline editing
 
 ### 🔮 Smart Predictions
 - Purchase history tracking
