@@ -151,13 +151,21 @@ class GroceryProvider extends ChangeNotifier {
   // ===== ITEM METHODS =====
 
   // Add item to selected list
-  Future<void> addItem(GroceryItem item) async {
+  Future<void> addItem(GroceryItem item, {int? position}) async {
     if (_selectedListId == null) return;
     
     final listIndex = _lists.indexWhere((list) => list.id == _selectedListId);
     if (listIndex == -1) return;
 
-    final updatedItems = [..._lists[listIndex].items, item];
+    final updatedItems = List<GroceryItem>.from(_lists[listIndex].items);
+    
+    // Insert at specific position or append to end
+    if (position != null && position >= 0 && position <= updatedItems.length) {
+      updatedItems.insert(position, item);
+    } else {
+      updatedItems.add(item);
+    }
+    
     _lists[listIndex] = _lists[listIndex].copyWith(items: updatedItems);
 
     notifyListeners();

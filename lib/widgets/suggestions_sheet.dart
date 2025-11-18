@@ -91,12 +91,30 @@ class SuggestionsSheet extends StatelessWidget {
                       icon: const Icon(Icons.add_circle),
                       color: Theme.of(context).colorScheme.primary,
                       onPressed: () async {
+                        final selectedList = provider.selectedList;
+                        if (selectedList == null) return;
+                        
                         // Add suggested item to selected list
                         final newItem = GroceryItem(
                           id: const Uuid().v4(),
                           name: itemName[0].toUpperCase() + itemName.substring(1),
                         );
-                        await provider.addItem(newItem);
+                        
+                        // Find the last empty bullet point
+                        int? emptyBulletIndex;
+                        for (int i = selectedList.items.length - 1; i >= 0; i--) {
+                          if (selectedList.items[i].name.trim().isEmpty) {
+                            emptyBulletIndex = i;
+                            break;
+                          }
+                        }
+                        
+                        // Insert before the empty bullet if it exists, otherwise append
+                        if (emptyBulletIndex != null) {
+                          await provider.addItem(newItem, position: emptyBulletIndex);
+                        } else {
+                          await provider.addItem(newItem);
+                        }
                         
                         // Call the callback to show snackbar in parent context
                         onItemAdded?.call(newItem.name);

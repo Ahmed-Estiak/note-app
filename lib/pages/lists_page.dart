@@ -168,11 +168,29 @@ class ListsPage extends StatelessWidget {
   }
 
   Future<void> _addQuickSuggestion(BuildContext context, GroceryProvider provider, String itemName) async {
+    final selectedList = provider.selectedList;
+    if (selectedList == null) return;
+    
     final newItem = GroceryItem(
       id: const Uuid().v4(),
       name: itemName,
     );
-    await provider.addItem(newItem);
+    
+    // Find the last empty bullet point
+    int? emptyBulletIndex;
+    for (int i = selectedList.items.length - 1; i >= 0; i--) {
+      if (selectedList.items[i].name.trim().isEmpty) {
+        emptyBulletIndex = i;
+        break;
+      }
+    }
+    
+    // Insert before the empty bullet if it exists, otherwise append
+    if (emptyBulletIndex != null) {
+      await provider.addItem(newItem, position: emptyBulletIndex);
+    } else {
+      await provider.addItem(newItem);
+    }
     
     // Show overlay notification
     _showOverlayNotification(context, itemName);
