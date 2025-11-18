@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../providers/grocery_provider.dart';
 import '../models/grocery_item.dart';
+import '../models/grocery_list.dart';
 import '../widgets/list_selector.dart';
 import '../widgets/bullet_item.dart';
 import '../widgets/add_edit_item_sheet.dart';
@@ -78,6 +79,9 @@ class ListsPage extends StatelessWidget {
             ),
           ),
 
+          // Quick suggestions
+          _buildQuickSuggestions(context, provider, selectedList),
+
           // Action buttons
           Container(
             padding: const EdgeInsets.all(16),
@@ -116,6 +120,62 @@ class ListsPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildQuickSuggestions(BuildContext context, GroceryProvider provider, GroceryList selectedList) {
+    // Get top 5 suggestions
+    final suggestions = provider.predictedItemNames(limit: 5);
+    
+    // Filter out items already in the list
+    final existingItemNames = selectedList.items
+        .map((item) => item.name.toLowerCase().trim())
+        .toSet();
+    
+    final filteredSuggestions = suggestions
+        .where((suggestion) => !existingItemNames.contains(suggestion))
+        .toList();
+    
+    // Don't show section if no suggestions
+    if (filteredSuggestions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    return Container(
+      height: 50,
+      margin: const EdgeInsets.only(top: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: filteredSuggestions.length,
+        itemBuilder: (context, index) {
+          final suggestion = filteredSuggestions[index];
+          final displayName = suggestion[0].toUpperCase() + suggestion.substring(1);
+          
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ActionChip(
+              label: Text(displayName),
+              onPressed: () => _addQuickSuggestion(context, provider, displayName),
+              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+              labelStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSecondaryContainer,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _addQuickSuggestion(BuildContext context, GroceryProvider provider, String itemName) async {
+    final newItem = GroceryItem(
+      id: const Uuid().v4(),
+      name: itemName,
+    );
+    await provider.addItem(newItem);
+    
+    // Show overlay notification
+    _showOverlayNotification(context, itemName);
   }
 
   Future<void> _addNewItem(GroceryProvider provider, int position) async {
