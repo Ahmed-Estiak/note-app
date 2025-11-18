@@ -37,6 +37,9 @@ class GroceryProvider extends ChangeNotifier {
     final defaultList = GroceryList(
       id: _uuid.v4(),
       name: 'Weekly',
+      items: [
+        GroceryItem(id: _uuid.v4(), name: ''),
+      ],
     );
     _lists.add(defaultList);
     _selectedListId = defaultList.id;
@@ -122,6 +125,9 @@ class GroceryProvider extends ChangeNotifier {
     final newList = GroceryList(
       id: _uuid.v4(),
       name: name,
+      items: [
+        GroceryItem(id: _uuid.v4(), name: ''),
+      ],
     );
     _lists.add(newList);
     _selectedListId = newList.id;
@@ -182,7 +188,13 @@ class GroceryProvider extends ChangeNotifier {
     final listIndex = _lists.indexWhere((list) => list.id == _selectedListId);
     if (listIndex == -1) return;
 
-    final updatedItems = _lists[listIndex].items.where((item) => item.id != itemId).toList();
+    var updatedItems = _lists[listIndex].items.where((item) => item.id != itemId).toList();
+    
+    // Ensure there's always at least one empty bullet point
+    if (updatedItems.isEmpty) {
+      updatedItems = [GroceryItem(id: _uuid.v4(), name: '')];
+    }
+    
     _lists[listIndex] = _lists[listIndex].copyWith(items: updatedItems);
 
     notifyListeners();
@@ -227,7 +239,13 @@ class GroceryProvider extends ChangeNotifier {
     }
     
     // Remove checked items from list
-    final remainingItems = _lists[listIndex].items.where((item) => !item.done).toList();
+    var remainingItems = _lists[listIndex].items.where((item) => !item.done).toList();
+    
+    // Ensure there's always at least one empty bullet point
+    if (remainingItems.isEmpty) {
+      remainingItems = [GroceryItem(id: _uuid.v4(), name: '')];
+    }
+    
     _lists[listIndex] = _lists[listIndex].copyWith(items: remainingItems);
     
     notifyListeners();

@@ -8,7 +8,9 @@ class BulletItem extends StatefulWidget {
   final VoidCallback onEditDetails;
   final VoidCallback onDelete;
   final VoidCallback onToggleDone;
-  final VoidCallback onSubmitted;
+  final Function(String text) onSubmitted;
+  final Function(String text)? onFocusLost;
+  final bool autoFocus;
 
   const BulletItem({
     super.key,
@@ -18,6 +20,8 @@ class BulletItem extends StatefulWidget {
     required this.onDelete,
     required this.onToggleDone,
     required this.onSubmitted,
+    this.onFocusLost,
+    this.autoFocus = false,
   });
 
   @override
@@ -41,10 +45,23 @@ class _BulletItemState extends State<BulletItem> {
       });
       
       // Save changes when focus is lost
-      if (!_focusNode.hasFocus && _controller.text != widget.item.name) {
-        widget.onTextChanged(_controller.text);
+      if (!_focusNode.hasFocus) {
+        final text = _controller.text.trim();
+        if (text != widget.item.name && text.isNotEmpty) {
+          widget.onTextChanged(text);
+          widget.onFocusLost?.call(text);
+        }
       }
     });
+
+    // Auto-focus if requested
+    if (widget.autoFocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _focusNode.requestFocus();
+        }
+      });
+    }
   }
 
   @override
@@ -84,6 +101,7 @@ class _BulletItemState extends State<BulletItem> {
                   TextField(
                     controller: _controller,
                     focusNode: _focusNode,
+                    autofocus: widget.autoFocus,
                     decoration: const InputDecoration(
                       border: InputBorder.none,
                       isDense: true,
@@ -96,9 +114,10 @@ class _BulletItemState extends State<BulletItem> {
                           : null,
                     ),
                     onSubmitted: (_) {
-                      if (_controller.text.trim().isNotEmpty) {
-                        widget.onTextChanged(_controller.text);
-                        widget.onSubmitted();
+                      final text = _controller.text.trim();
+                      if (text.isNotEmpty) {
+                        widget.onTextChanged(text);
+                        widget.onSubmitted(text);
                       }
                     },
                   ),

@@ -41,51 +41,41 @@ class ListsPage extends StatelessWidget {
 
           // Items list
           Expanded(
-            child: selectedList.items.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.list_alt,
-                          size: 64,
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No items yet',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Tap + to add your first item',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: selectedList.items.length,
-                    itemBuilder: (context, index) {
-                      final item = selectedList.items[index];
-                      return BulletItem(
-                        item: item,
-                        onTextChanged: (text) {
-                          if (text.trim().isNotEmpty) {
-                            final updatedItem = item.copyWith(name: text.trim());
-                            provider.updateItem(item.id, updatedItem);
-                          }
-                        },
-                        onEditDetails: () => _showEditItemSheet(context, provider, item),
-                        onDelete: () => _deleteItem(context, provider, item.id),
-                        onToggleDone: () => provider.toggleItemDone(item.id),
-                        onSubmitted: () => _addNewItem(provider, index + 1),
-                      );
-                    },
-                  ),
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: selectedList.items.length,
+              itemBuilder: (context, index) {
+                final item = selectedList.items[index];
+                final isLastItem = index == selectedList.items.length - 1;
+                
+                return BulletItem(
+                  key: ValueKey(item.id),
+                  item: item,
+                  autoFocus: isLastItem && item.name.isEmpty,
+                  onTextChanged: (text) {
+                    if (text.trim().isNotEmpty) {
+                      final updatedItem = item.copyWith(name: text.trim());
+                      provider.updateItem(item.id, updatedItem);
+                    }
+                  },
+                  onEditDetails: () => _showEditItemSheet(context, provider, item),
+                  onDelete: () => _deleteItem(context, provider, item.id),
+                  onToggleDone: () => provider.toggleItemDone(item.id),
+                  onSubmitted: (text) {
+                    // Only add new bullet if this is the last item and it has content
+                    if (isLastItem && text.trim().isNotEmpty) {
+                      _addNewItemIfNeeded(provider);
+                    }
+                  },
+                  onFocusLost: (text) {
+                    // Also add new bullet when focus is lost on the last item with content
+                    if (isLastItem && text.trim().isNotEmpty) {
+                      _addNewItemIfNeeded(provider);
+                    }
+                  },
+                );
+              },
+            ),
           ),
 
           // Action buttons
@@ -125,10 +115,6 @@ class ListsPage extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _addNewItem(provider, selectedList.items.length),
-        child: const Icon(Icons.add),
-      ),
     );
   }
 
@@ -138,6 +124,23 @@ class ListsPage extends StatelessWidget {
       name: '',
     );
     await provider.addItem(newItem);
+  }
+
+  Future<void> _addNewItemIfNeeded(GroceryProvider provider) async {
+    final selectedList = provider.selectedList;
+    if (selectedList == null) return;
+    
+    // Check if the last item is already empty
+    if (selectedList.items.isNotEmpty) {
+      final lastItem = selectedList.items.last;
+      if (lastItem.name.trim().isEmpty) {
+        // Already have an empty bullet, don't add another
+        return;
+      }
+    }
+    
+    // Add new empty bullet
+    await _addNewItem(provider, selectedList.items.length);
   }
 
   Future<void> _showEditItemSheet(BuildContext context, GroceryProvider provider, GroceryItem item) async {
