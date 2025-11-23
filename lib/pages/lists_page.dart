@@ -178,8 +178,8 @@ class _ListsPageState extends State<ListsPage> {
   }
 
   Widget _buildQuickSuggestions(BuildContext context, GroceryProvider provider, GroceryList selectedList) {
-    // Get top 5 suggestions
-    final suggestions = provider.predictedItemNames(limit: 5);
+    // Get top 8 suggestions
+    final suggestions = provider.predictedItemNames(limit: 8);
     
     // Filter out items already in the list
     final existingItemNames = selectedList.items
