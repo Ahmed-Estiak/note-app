@@ -290,19 +290,7 @@ class ListsPage extends StatelessWidget {
     if (result == true) {
       await provider.completeShopping();
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Shopping trip completed!'),
-            duration: const Duration(seconds: 2),
-            backgroundColor: Colors.green.shade700,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.only(
-              bottom: 95,
-              left: 16,
-              right: 16,
-            ),
-          ),
-        );
+        _showOverlayNotification(context, 'Shopping trip completed!');
       }
     }
   }
@@ -319,13 +307,18 @@ class ListsPage extends StatelessWidget {
     );
   }
 
-  void _showOverlayNotification(BuildContext context, String itemName) {
+  void _showOverlayNotification(BuildContext context, String message) {
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
+    
+    // Determine if this is a "Shopping trip completed" message or item added
+    final isCompletedMessage = message.contains('completed');
+    final displayText = isCompletedMessage ? message : 'Added $message';
+    final icon = isCompletedMessage ? Icons.shopping_bag : Icons.check_circle;
 
     overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
-        top: MediaQuery.of(context).padding.top + 80,
+        top: MediaQuery.of(context).padding.top + 16,
         left: 16,
         right: 16,
         child: Material(
@@ -346,11 +339,11 @@ class ListsPage extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                Icon(icon, color: Colors.white, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Added $itemName',
+                    displayText,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,
