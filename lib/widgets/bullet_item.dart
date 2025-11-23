@@ -47,16 +47,6 @@ class _BulletItemState extends State<BulletItem> {
     _previousText = widget.item.name;
     _focusNode = widget.focusNode ?? FocusNode();
     
-    // Listen to text changes for real-time deletion detection
-    _controller.addListener(() {
-      final currentText = _controller.text.trim();
-      // If text becomes empty and it wasn't empty before, trigger deletion
-      if (currentText.isEmpty && _previousText.isNotEmpty) {
-        widget.onTextDeleted?.call();
-      }
-      _previousText = currentText;
-    });
-    
     _focusNode.addListener(() {
       setState(() {
         _isEditing = _focusNode.hasFocus;
@@ -137,7 +127,8 @@ class _BulletItemState extends State<BulletItem> {
                     onSubmitted: (_) {
                       final text = _controller.text.trim();
                       if (text.isEmpty) {
-                        // Keep focus, do nothing
+                        // Keep focus, do nothing - just refocus to keep blinking
+                        _focusNode.requestFocus();
                         widget.onEmptySubmitted?.call();
                       } else {
                         widget.onTextChanged(text);

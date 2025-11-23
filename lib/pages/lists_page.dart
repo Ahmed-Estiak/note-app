@@ -106,15 +106,11 @@ class _ListsPageState extends State<ListsPage> {
                   onDelete: () => _deleteItem(context, provider, item.id),
                   onToggleDone: () => provider.toggleItemDone(item.id),
                   onEmptySubmitted: () {
-                    // Do nothing, keep focus
+                    // Empty bullet + Enter: jump to last empty bullet
+                    _focusLastEmptyBullet(provider);
                   },
-                  onTextDeleted: () async {
-                    // Delete item and jump to last empty bullet
-                    if (!isLastItem) {
-                      await provider.deleteItem(item.id);
-                      await _addNewItemIfNeeded(provider);
-                      _focusLastEmptyBullet(provider);
-                    }
+                  onTextDeleted: () {
+                    // Not used anymore - no auto-delete on text removal
                   },
                   onSubmitted: (text) {
                     if (isLastItem) {
