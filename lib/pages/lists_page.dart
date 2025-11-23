@@ -10,8 +10,50 @@ import '../widgets/add_edit_item_sheet.dart';
 import '../widgets/suggestions_sheet.dart';
 import '../widgets/expiring_banner.dart';
 
-class ListsPage extends StatelessWidget {
+class ListsPage extends StatefulWidget {
   const ListsPage({super.key});
+
+  @override
+  State<ListsPage> createState() => _ListsPageState();
+}
+
+class _ListsPageState extends State<ListsPage> {
+  // Map to store focus nodes for each item
+  final Map<String, FocusNode> _focusNodes = {};
+
+  @override
+  void dispose() {
+    // Dispose all focus nodes
+    for (final node in _focusNodes.values) {
+      node.dispose();
+    }
+    super.dispose();
+  }
+
+  FocusNode _getFocusNode(String itemId) {
+    return _focusNodes.putIfAbsent(itemId, () => FocusNode());
+  }
+
+  void _focusLastEmptyBullet(GroceryProvider provider) {
+    final selectedList = provider.selectedList;
+    if (selectedList == null || selectedList.items.isEmpty) return;
+
+    // Find the last empty bullet
+    for (int i = selectedList.items.length - 1; i >= 0; i--) {
+      if (selectedList.items[i].name.trim().isEmpty) {
+        final itemId = selectedList.items[i].id;
+        final focusNode = _getFocusNode(itemId);
+        
+        // Request focus after a short delay to ensure UI is updated
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            focusNode.requestFocus();
+          }
+        });
+        break;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +94,7 @@ class ListsPage extends StatelessWidget {
                 return BulletItem(
                   key: ValueKey(item.id),
                   item: item,
+                  focusNode: _getFocusNode(item.id),
                   autoFocus: isLastItem && item.name.isEmpty,
                   onTextChanged: (text) {
                     if (text.trim().isNotEmpty) {
@@ -62,10 +105,26 @@ class ListsPage extends StatelessWidget {
                   onEditDetails: () => _showEditItemSheet(context, provider, item),
                   onDelete: () => _deleteItem(context, provider, item.id),
                   onToggleDone: () => provider.toggleItemDone(item.id),
+                  onEmptySubmitted: () {
+                    // Do nothing, keep focus
+                  },
+                  onTextDeleted: () async {
+                    // Delete item and jump to last empty bullet
+                    if (!isLastItem) {
+                      await provider.deleteItem(item.id);
+                      await _addNewItemIfNeeded(provider);
+                      _focusLastEmptyBullet(provider);
+                    }
+                  },
                   onSubmitted: (text) {
-                    // Only add new bullet if this is the last item and it has content
-                    if (isLastItem && text.trim().isNotEmpty) {
-                      _addNewItemIfNeeded(provider);
+                    if (isLastItem) {
+                      // Last item: add new bullet if it has content
+                      if (text.trim().isNotEmpty) {
+                        _addNewItemIfNeeded(provider);
+                      }
+                    } else {
+                      // Not last item: save and jump to last empty bullet
+                      _focusLastEmptyBullet(provider);
                     }
                   },
                   onFocusLost: (text) {

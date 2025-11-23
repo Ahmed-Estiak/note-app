@@ -10,7 +10,10 @@ class BulletItem extends StatefulWidget {
   final VoidCallback onToggleDone;
   final Function(String text) onSubmitted;
   final Function(String text)? onFocusLost;
+  final VoidCallback? onEmptySubmitted;
+  final VoidCallback? onTextDeleted;
   final bool autoFocus;
+  final FocusNode? focusNode;
 
   const BulletItem({
     super.key,
@@ -21,7 +24,10 @@ class BulletItem extends StatefulWidget {
     required this.onToggleDone,
     required this.onSubmitted,
     this.onFocusLost,
+    this.onEmptySubmitted,
+    this.onTextDeleted,
     this.autoFocus = false,
+    this.focusNode,
   });
 
   @override
@@ -32,12 +38,24 @@ class _BulletItemState extends State<BulletItem> {
   late TextEditingController _controller;
   late FocusNode _focusNode;
   bool _isEditing = false;
+  String _previousText = '';
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.item.name);
-    _focusNode = FocusNode();
+    _previousText = widget.item.name;
+    _focusNode = widget.focusNode ?? FocusNode();
+    
+    // Listen to text changes for real-time deletion detection
+    _controller.addListener(() {
+      final currentText = _controller.text.trim();
+      // If text becomes empty and it wasn't empty before, trigger deletion
+      if (currentText.isEmpty && _previousText.isNotEmpty) {
+        widget.onTextDeleted?.call();
+      }
+      _previousText = currentText;
+    });
     
     _focusNode.addListener(() {
       setState(() {
@@ -75,7 +93,10 @@ class _BulletItemState extends State<BulletItem> {
   @override
   void dispose() {
     _controller.dispose();
-    _focusNode.dispose();
+    // Only dispose if we created the focus node
+    if (widget.focusNode == null) {
+      _focusNode.dispose();
+    }
     super.dispose();
   }
 
@@ -115,7 +136,10 @@ class _BulletItemState extends State<BulletItem> {
                     ),
                     onSubmitted: (_) {
                       final text = _controller.text.trim();
-                      if (text.isNotEmpty) {
+                      if (text.isEmpty) {
+                        // Keep focus, do nothing
+                        widget.onEmptySubmitted?.call();
+                      } else {
                         widget.onTextChanged(text);
                         widget.onSubmitted(text);
                       }
