@@ -246,6 +246,22 @@ class GroceryProvider extends ChangeNotifier {
     return matchingPurchases.first.itemId;
   }
 
+  // Update purchase history by original suggestion name (for Magic List edits)
+  Future<void> updatePurchaseHistoryByName(String originalName, String newName, {String? listId}) async {
+    final targetListId = listId ?? _selectedListId;
+    if (targetListId == null) return;
+
+    // Find itemId for the original name
+    final itemId = getItemIdForSuggestion(originalName, listId: targetListId);
+    if (itemId == null || itemId.isEmpty) return;
+
+    // Update all purchases with this itemId
+    _updatePurchaseHistoryItemName(itemId, newName);
+    
+    notifyListeners();
+    await save();
+  }
+
   // Delete item from selected list
   Future<void> deleteItem(String itemId) async {
     if (_selectedListId == null) return;

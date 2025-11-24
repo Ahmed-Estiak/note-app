@@ -398,10 +398,18 @@ class _ListsPageState extends State<ListsPage> {
             _deletedMagicListSuggestions.add(suggestion);
           });
         },
-        onNameEdited: (originalName, editedName) {
+        onNameEdited: (originalName, editedName) async {
+          // Store in local map for UI persistence
           setState(() {
             _editedMagicListNames[originalName] = editedName;
           });
+          
+          // Immediately update purchase history
+          await provider.updatePurchaseHistoryByName(
+            originalName,
+            editedName,
+            listId: provider.selectedList?.id,
+          );
         },
         onAddAll: (items) async {
           final selectedList = provider.selectedList;
