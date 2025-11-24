@@ -273,12 +273,18 @@ class _ListsPageState extends State<ListsPage> {
     final selectedList = provider.selectedList;
     if (selectedList == null) return;
     
+    // Parse the item name for quantity and price
+    final parsed = ItemParser.parse(itemName);
+    
     // Try to find existing itemId for this suggestion (to preserve history)
-    final existingItemId = provider.getItemIdForSuggestion(itemName);
+    // Use the parsed name for lookup
+    final existingItemId = provider.getItemIdForSuggestion(parsed.name);
     
     final newItem = GroceryItem(
       id: existingItemId ?? const Uuid().v4(),
-      name: itemName,
+      name: parsed.name,
+      quantity: parsed.quantity,
+      price: parsed.price,
     );
     
     // Find the last empty bullet point
@@ -452,12 +458,18 @@ class _ListsPageState extends State<ListsPage> {
 
           // Add all items before the empty bullet
           for (final itemName in items) {
+            // Parse the item name for quantity and price
+            final parsed = ItemParser.parse(itemName);
+            
             // Try to find existing itemId for this item (to preserve history)
-            final existingItemId = provider.getItemIdForSuggestion(itemName);
+            // Use the parsed name for lookup
+            final existingItemId = provider.getItemIdForSuggestion(parsed.name);
             
             final newItem = GroceryItem(
               id: existingItemId ?? const Uuid().v4(),
-              name: itemName,
+              name: parsed.name,
+              quantity: parsed.quantity,
+              price: parsed.price,
             );
             
             if (emptyBulletIndex != null) {

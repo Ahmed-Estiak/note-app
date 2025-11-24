@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/grocery_provider.dart';
+import '../utils/item_parser.dart';
 
 class MagicListSheet extends StatefulWidget {
   final Function(List<String> items) onAddAll;
@@ -61,7 +62,23 @@ class _MagicListSheetState extends State<MagicListSheet> {
         final currentText = _controllers[i].text.trim().toLowerCase();
         final normalizedOriginal = originalName.toLowerCase().trim();
         
-        if (currentText.isNotEmpty && currentText != normalizedOriginal) {
+        if (currentText.isEmpty) {
+          // Empty text: revert to original name
+          _controllers[i].text = originalName[0].toUpperCase() + originalName.substring(1);
+          continue;
+        }
+        
+        // Parse to check if name is valid
+        final parsed = ItemParser.parse(currentText);
+        
+        if (!parsed.isValid) {
+          // Invalid (e.g., only "# qty"): revert to original name
+          _controllers[i].text = originalName[0].toUpperCase() + originalName.substring(1);
+          continue;
+        }
+        
+        // Valid: save the edit
+        if (currentText != normalizedOriginal) {
           widget.onNameEdited(originalName, currentText);
         }
       }
@@ -137,8 +154,16 @@ class _MagicListSheetState extends State<MagicListSheet> {
           
           // Only update if text is different from original
           if (currentText.isNotEmpty && currentText != normalizedOriginal) {
-            // Set a new timer - only call onNameEdited after 500ms of no typing
-            _debounceTimers[controllerIndex] = Timer(const Duration(milliseconds: 500), () {
+            // Detect if text contains # or * symbols (parsing mode)
+            final hasSymbols = currentText.contains('#') || currentText.contains('*');
+            
+            // Use shorter delay for text with symbols to prevent data loss
+            final delay = hasSymbols 
+                ? const Duration(milliseconds: 150) 
+                : const Duration(milliseconds: 300);
+            
+            // Set a new timer - call onNameEdited after delay
+            _debounceTimers[controllerIndex] = Timer(delay, () {
               widget.onNameEdited(originalName, currentText);
             });
           }

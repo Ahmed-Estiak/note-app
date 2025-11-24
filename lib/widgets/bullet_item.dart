@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/grocery_item.dart';
+import '../utils/item_parser.dart';
 
 class BulletItem extends StatefulWidget {
   final GroceryItem item;
@@ -55,7 +56,25 @@ class _BulletItemState extends State<BulletItem> {
       // Save changes when focus is lost
       if (!_focusNode.hasFocus) {
         final text = _controller.text.trim();
-        if (text != widget.item.name && text.isNotEmpty) {
+        
+        if (text.isEmpty) {
+          // Empty text: revert to original name
+          _controller.text = widget.item.name;
+          return;
+        }
+        
+        // Parse to check if name is valid
+        final parsed = ItemParser.parse(text);
+        
+        if (!parsed.isValid) {
+          // Invalid (e.g., only "# qty"): revert to original name
+          _controller.text = widget.item.name;
+          return;
+        }
+        
+        // Valid: update controller to show only parsed name
+        if (text != widget.item.name) {
+          _controller.text = parsed.name;
           widget.onTextChanged(text);
           widget.onFocusLost?.call(text);
         }
@@ -131,6 +150,17 @@ class _BulletItemState extends State<BulletItem> {
                         _focusNode.requestFocus();
                         widget.onEmptySubmitted?.call();
                       } else {
+                        // Parse the text
+                        final parsed = ItemParser.parse(text);
+                        
+                        if (parsed.isValid) {
+                          // Update controller to show only the parsed name
+                          _controller.text = parsed.name;
+                          _controller.selection = TextSelection.fromPosition(
+                            TextPosition(offset: parsed.name.length),
+                          );
+                        }
+                        
                         widget.onTextChanged(text);
                         widget.onSubmitted(text);
                       }
@@ -187,7 +217,7 @@ class _BulletItemState extends State<BulletItem> {
     final parts = <String>[];
     
     if (widget.item.quantity != null && widget.item.quantity!.isNotEmpty) {
-      parts.add(widget.item.quantity!);
+      parts.add('Qty: ${widget.item.quantity!}');
     }
     
     if (widget.item.price != null) {
