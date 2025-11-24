@@ -196,28 +196,22 @@ class _ListsPageState extends State<ListsPage> {
     }
     
     return Container(
-      height: 50,
-      margin: const EdgeInsets.only(top: 8),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: filteredSuggestions.length,
-        itemBuilder: (context, index) {
-          final suggestion = filteredSuggestions[index];
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: filteredSuggestions.map((suggestion) {
           final displayName = suggestion[0].toUpperCase() + suggestion.substring(1);
           
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ActionChip(
-              label: Text(displayName),
-              onPressed: () => _addQuickSuggestion(context, provider, displayName),
-              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-              labelStyle: TextStyle(
-                color: Theme.of(context).colorScheme.onSecondaryContainer,
-              ),
+          return ActionChip(
+            label: Text(displayName),
+            onPressed: () => _addQuickSuggestion(context, provider, displayName),
+            backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+            labelStyle: TextStyle(
+              color: Theme.of(context).colorScheme.onSecondaryContainer,
             ),
           );
-        },
+        }).toList(),
       ),
     );
   }
