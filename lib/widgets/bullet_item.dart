@@ -177,13 +177,18 @@ class _BulletItemState extends State<BulletItem> {
   }
 
   bool _hasDetails() {
-    return widget.item.price != null ||
+    return widget.item.quantity != null ||
+        widget.item.price != null ||
         widget.item.category != 'Other' ||
         widget.item.expiry != null;
   }
 
   String _getDetailsText() {
     final parts = <String>[];
+    
+    if (widget.item.quantity != null && widget.item.quantity!.isNotEmpty) {
+      parts.add(widget.item.quantity!);
+    }
     
     if (widget.item.price != null) {
       parts.add('\$${widget.item.price!.toStringAsFixed(2)}');

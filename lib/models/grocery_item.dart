@@ -1,6 +1,7 @@
 class GroceryItem {
   final String id;
   final String name;
+  final String? quantity; // e.g., "10pcs", "2kg", "5L" - max 20 chars
   final double? price;
   final String category;
   final DateTime? expiry;
@@ -9,6 +10,7 @@ class GroceryItem {
   GroceryItem({
     required this.id,
     required this.name,
+    this.quantity,
     this.price,
     this.category = 'Other',
     this.expiry,
@@ -35,16 +37,19 @@ class GroceryItem {
   GroceryItem copyWith({
     String? id,
     String? name,
+    String? quantity,
     double? price,
     String? category,
     DateTime? expiry,
     bool? done,
+    bool clearQuantity = false,
     bool clearPrice = false,
     bool clearExpiry = false,
   }) {
     return GroceryItem(
       id: id ?? this.id,
       name: name ?? this.name,
+      quantity: clearQuantity ? null : (quantity ?? this.quantity),
       price: clearPrice ? null : (price ?? this.price),
       category: category ?? this.category,
       expiry: clearExpiry ? null : (expiry ?? this.expiry),
@@ -56,6 +61,7 @@ class GroceryItem {
     return {
       'id': id,
       'name': name,
+      'quantity': quantity,
       'price': price,
       'category': category,
       'expiry': expiry?.toIso8601String(),
@@ -67,6 +73,7 @@ class GroceryItem {
     return GroceryItem(
       id: json['id'] as String,
       name: json['name'] as String,
+      quantity: json['quantity'] as String?,
       price: json['price'] != null ? (json['price'] as num).toDouble() : null,
       category: json['category'] as String? ?? 'Other',
       expiry: json['expiry'] != null ? DateTime.parse(json['expiry'] as String) : null,

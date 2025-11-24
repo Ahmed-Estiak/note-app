@@ -16,6 +16,7 @@ class AddEditItemSheet extends StatefulWidget {
 class _AddEditItemSheetState extends State<AddEditItemSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _quantityController = TextEditingController();
   final _priceController = TextEditingController();
   
   String _category = 'Other';
@@ -37,6 +38,7 @@ class _AddEditItemSheetState extends State<AddEditItemSheet> {
     super.initState();
     if (widget.item != null) {
       _nameController.text = widget.item!.name;
+      _quantityController.text = widget.item!.quantity ?? '';
       _priceController.text = widget.item!.price?.toString() ?? '';
       _category = widget.item!.category;
       _expiry = widget.item!.expiry;
@@ -46,6 +48,7 @@ class _AddEditItemSheetState extends State<AddEditItemSheet> {
   @override
   void dispose() {
     _nameController.dispose();
+    _quantityController.dispose();
     _priceController.dispose();
     super.dispose();
   }
@@ -67,9 +70,11 @@ class _AddEditItemSheetState extends State<AddEditItemSheet> {
 
   void _save() {
     if (_formKey.currentState!.validate()) {
+      final quantityText = _quantityController.text.trim();
       final item = GroceryItem(
         id: widget.item?.id ?? const Uuid().v4(),
         name: _nameController.text.trim(),
+        quantity: quantityText.isEmpty ? null : quantityText,
         price: _priceController.text.isEmpty 
             ? null 
             : double.tryParse(_priceController.text),
@@ -116,6 +121,25 @@ class _AddEditItemSheetState extends State<AddEditItemSheet> {
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Please enter an item name';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // Quantity field
+            TextFormField(
+              controller: _quantityController,
+              decoration: const InputDecoration(
+                labelText: 'Quantity (optional)',
+                hintText: 'e.g., 10pcs, 2kg, 5L',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.numbers),
+              ),
+              maxLength: 20,
+              validator: (value) {
+                if (value != null && value.trim().length > 20) {
+                  return 'Maximum 20 characters';
                 }
                 return null;
               },
