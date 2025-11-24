@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../models/grocery_item.dart';
+import '../utils/item_parser.dart';
 
 class AddEditItemSheet extends StatefulWidget {
   final GroceryItem? item; // null for add, non-null for edit
@@ -16,6 +17,7 @@ class AddEditItemSheet extends StatefulWidget {
 class _AddEditItemSheetState extends State<AddEditItemSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _nameFocusNode = FocusNode();
   final _quantityController = TextEditingController();
   final _priceController = TextEditingController();
   
@@ -43,14 +45,45 @@ class _AddEditItemSheetState extends State<AddEditItemSheet> {
       _category = widget.item!.category;
       _expiry = widget.item!.expiry;
     }
+    
+    // Add focus listener to parse when losing focus
+    _nameFocusNode.addListener(() {
+      if (!_nameFocusNode.hasFocus) {
+        _parseNameField();
+      }
+    });
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _nameFocusNode.dispose();
     _quantityController.dispose();
     _priceController.dispose();
     super.dispose();
+  }
+  
+  void _parseNameField() {
+    final input = _nameController.text;
+    final parsed = ItemParser.parse(input);
+    
+    if (!parsed.isValid) {
+      // Invalid: name is empty before symbols, keep as is
+      return;
+    }
+    
+    // Valid: update all fields
+    setState(() {
+      _nameController.text = parsed.name;
+      
+      if (parsed.quantity != null) {
+        _quantityController.text = parsed.quantity!;
+      }
+      
+      if (parsed.price != null) {
+        _priceController.text = parsed.price!.toStringAsFixed(2);
+      }
+    });
   }
 
   Future<void> _selectExpiryDate() async {
@@ -112,12 +145,15 @@ class _AddEditItemSheetState extends State<AddEditItemSheet> {
             // Name field
             TextFormField(
               controller: _nameController,
+              focusNode: _nameFocusNode,
               decoration: const InputDecoration(
                 labelText: 'Item Name',
+                hintText: 'e.g., eggs # 12pcs * 5.99',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.shopping_basket),
               ),
               textCapitalization: TextCapitalization.words,
+              onFieldSubmitted: (_) => _parseNameField(),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Please enter an item name';

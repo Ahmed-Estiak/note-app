@@ -10,6 +10,7 @@ import '../widgets/add_edit_item_sheet.dart';
 import '../widgets/suggestions_sheet.dart';
 import '../widgets/magic_list_sheet.dart';
 import '../widgets/expiring_banner.dart';
+import '../utils/item_parser.dart';
 
 class ListsPage extends StatefulWidget {
   const ListsPage({super.key});
@@ -125,8 +126,17 @@ class _ListsPageState extends State<ListsPage> {
                   autoFocus: isLastItem && item.name.isEmpty,
                   onTextChanged: (text) {
                     if (text.trim().isNotEmpty) {
-                      final updatedItem = item.copyWith(name: text.trim());
-                      provider.updateItem(item.id, updatedItem);
+                      // Parse the text for quantity and price
+                      final parsed = ItemParser.parse(text);
+                      
+                      if (parsed.isValid) {
+                        final updatedItem = item.copyWith(
+                          name: parsed.name,
+                          quantity: parsed.quantity,
+                          price: parsed.price,
+                        );
+                        provider.updateItem(item.id, updatedItem);
+                      }
                     }
                   },
                   onEditDetails: () => _showEditItemSheet(context, provider, item),
@@ -140,6 +150,14 @@ class _ListsPageState extends State<ListsPage> {
                     // Not used anymore - no auto-delete on text removal
                   },
                   onSubmitted: (text) {
+                    // Parse to check validity
+                    final parsed = ItemParser.parse(text);
+                    
+                    if (!parsed.isValid) {
+                      // Invalid (e.g., "# 12pcs" with no name): keep empty and refocus
+                      return;
+                    }
+                    
                     if (isLastItem) {
                       // Last item: add new bullet if it has content
                       if (text.trim().isNotEmpty) {
@@ -151,6 +169,14 @@ class _ListsPageState extends State<ListsPage> {
                     }
                   },
                   onFocusLost: (text) {
+                    // Parse to check validity
+                    final parsed = ItemParser.parse(text);
+                    
+                    if (!parsed.isValid) {
+                      // Invalid: don't add new bullet
+                      return;
+                    }
+                    
                     // Also add new bullet when focus is lost on the last item with content
                     if (isLastItem && text.trim().isNotEmpty) {
                       _addNewItemIfNeeded(provider);
