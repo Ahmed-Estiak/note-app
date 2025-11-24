@@ -21,6 +21,10 @@ class ListsPage extends StatefulWidget {
 class _ListsPageState extends State<ListsPage> {
   // Map to store focus nodes for each item
   final Map<String, FocusNode> _focusNodes = {};
+  final ScrollController _scrollController = ScrollController();
+  String? _previousListId;
+  final Set<String> _deletedMagicListSuggestions = {};
+  final Map<String, String> _editedMagicListNames = {};
 
   @override
   void dispose() {
@@ -28,7 +32,22 @@ class _ListsPageState extends State<ListsPage> {
     for (final node in _focusNodes.values) {
       node.dispose();
     }
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    }
   }
 
   FocusNode _getFocusNode(String itemId) {
@@ -67,6 +86,12 @@ class _ListsPageState extends State<ListsPage> {
       );
     }
 
+    // Detect category change and scroll to bottom
+    if (_previousListId != selectedList.id) {
+      _previousListId = selectedList.id;
+      _scrollToBottom();
+    }
+
     final expiringItems = provider.getExpiringSoonItems();
 
     return Scaffold(
@@ -86,6 +111,7 @@ class _ListsPageState extends State<ListsPage> {
           // Items list
           Expanded(
             child: ListView.builder(
+              controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: selectedList.items.length,
               itemBuilder: (context, index) {
@@ -221,8 +247,11 @@ class _ListsPageState extends State<ListsPage> {
     final selectedList = provider.selectedList;
     if (selectedList == null) return;
     
+    // Try to find existing itemId for this suggestion (to preserve history)
+    final existingItemId = provider.getItemIdForSuggestion(itemName);
+    
     final newItem = GroceryItem(
-      id: const Uuid().v4(),
+      id: existingItemId ?? const Uuid().v4(),
       name: itemName,
     );
     
@@ -362,6 +391,18 @@ class _ListsPageState extends State<ListsPage> {
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) => MagicListSheet(
+        deletedSuggestions: _deletedMagicListSuggestions,
+        editedNames: _editedMagicListNames,
+        onDelete: (suggestion) {
+          setState(() {
+            _deletedMagicListSuggestions.add(suggestion);
+          });
+        },
+        onNameEdited: (originalName, editedName) {
+          setState(() {
+            _editedMagicListNames[originalName] = editedName;
+          });
+        },
         onAddAll: (items) async {
           final selectedList = provider.selectedList;
           if (selectedList == null) return;
@@ -377,8 +418,11 @@ class _ListsPageState extends State<ListsPage> {
 
           // Add all items before the empty bullet
           for (final itemName in items) {
+            // Try to find existing itemId for this item (to preserve history)
+            final existingItemId = provider.getItemIdForSuggestion(itemName);
+            
             final newItem = GroceryItem(
-              id: const Uuid().v4(),
+              id: existingItemId ?? const Uuid().v4(),
               name: itemName,
             );
             
@@ -389,6 +433,12 @@ class _ListsPageState extends State<ListsPage> {
               await provider.addItem(newItem);
             }
           }
+
+          // Clear deleted suggestions and edited names after successful add
+          setState(() {
+            _deletedMagicListSuggestions.clear();
+            _editedMagicListNames.clear();
+          });
 
           // Show notification
           if (context.mounted) {

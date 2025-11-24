@@ -45,6 +45,11 @@ class ListSelector extends StatelessWidget {
               ),
             ),
             IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Rename list',
+              onPressed: () => _showRenameListDialog(context, provider),
+            ),
+            IconButton(
               icon: const Icon(Icons.add),
               tooltip: 'Create new list',
               onPressed: () => _showCreateListDialog(context, provider),
@@ -92,6 +97,45 @@ class ListSelector extends StatelessWidget {
 
     if (result == true && controller.text.trim().isNotEmpty) {
       await provider.createList(controller.text.trim());
+    }
+    
+    controller.dispose();
+  }
+
+  Future<void> _showRenameListDialog(BuildContext context, GroceryProvider provider) async {
+    final selectedList = provider.selectedList;
+    if (selectedList == null) return;
+
+    final controller = TextEditingController(text: selectedList.name);
+    
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename List'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'List Name',
+            border: OutlineInputBorder(),
+          ),
+          textCapitalization: TextCapitalization.words,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && controller.text.trim().isNotEmpty) {
+      await provider.renameList(selectedList.id, controller.text.trim());
     }
     
     controller.dispose();

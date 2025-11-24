@@ -148,6 +148,16 @@ class GroceryProvider extends ChangeNotifier {
     await save();
   }
 
+  Future<void> renameList(String listId, String newName) async {
+    final listIndex = _lists.indexWhere((list) => list.id == listId);
+    if (listIndex == -1) return;
+    
+    _lists[listIndex] = _lists[listIndex].copyWith(name: newName);
+    
+    notifyListeners();
+    await save();
+  }
+
   // ===== ITEM METHODS =====
 
   // Add item to selected list
@@ -179,14 +189,61 @@ class GroceryProvider extends ChangeNotifier {
     final listIndex = _lists.indexWhere((list) => list.id == _selectedListId);
     if (listIndex == -1) return;
 
+    // Get the old item to check if name changed
+    final oldItem = _lists[listIndex].items.firstWhere(
+      (item) => item.id == itemId,
+      orElse: () => updatedItem,
+    );
+
     final updatedItems = _lists[listIndex].items.map((item) {
       return item.id == itemId ? updatedItem : item;
     }).toList();
 
     _lists[listIndex] = _lists[listIndex].copyWith(items: updatedItems);
 
+    // If the name changed, update all purchase history with this itemId
+    if (oldItem.name.toLowerCase().trim() != updatedItem.name.toLowerCase().trim()) {
+      _updatePurchaseHistoryItemName(itemId, updatedItem.name);
+    }
+
     notifyListeners();
     await save();
+  }
+
+  // Update item name across all purchase history
+  void _updatePurchaseHistoryItemName(String itemId, String newName) {
+    final normalizedName = newName.toLowerCase().trim();
+    for (int i = 0; i < _purchaseHistory.length; i++) {
+      if (_purchaseHistory[i].itemId == itemId) {
+        _purchaseHistory[i] = Purchase(
+          itemName: normalizedName,
+          itemId: _purchaseHistory[i].itemId,
+          listId: _purchaseHistory[i].listId,
+          boughtAt: _purchaseHistory[i].boughtAt,
+          price: _purchaseHistory[i].price,
+          category: _purchaseHistory[i].category,
+        );
+      }
+    }
+  }
+
+  // Find existing itemId for a suggestion name (to link renamed items)
+  String? getItemIdForSuggestion(String suggestionName, {String? listId}) {
+    final targetListId = listId ?? _selectedListId;
+    if (targetListId == null) return null;
+
+    final normalizedName = suggestionName.toLowerCase().trim();
+    
+    // Find the most recent purchase with this name in this category
+    final matchingPurchases = _purchaseHistory
+        .where((p) => p.listId == targetListId && p.itemName == normalizedName)
+        .toList();
+    
+    if (matchingPurchases.isEmpty) return null;
+    
+    // Return the itemId from the most recent purchase
+    matchingPurchases.sort((a, b) => b.boughtAt.compareTo(a.boughtAt));
+    return matchingPurchases.first.itemId;
   }
 
   // Delete item from selected list
@@ -236,10 +293,12 @@ class GroceryProvider extends ChangeNotifier {
     final now = DateTime.now();
     final checkedItems = _lists[listIndex].items.where((item) => item.done).toList();
     
-    // Add to purchase history with price and category
+    // Add to purchase history with price, category, itemId, and listId
     for (final item in checkedItems) {
       _purchaseHistory.add(Purchase(
         itemName: item.name.toLowerCase().trim(),
+        itemId: item.id,
+        listId: _selectedListId!,
         boughtAt: now,
         price: item.price,
         category: item.category,
@@ -261,22 +320,39 @@ class GroceryProvider extends ChangeNotifier {
   }
 
   // Get predicted items
-  List<String> predictedItemNames({int limit = 8}) {
+  List<String> predictedItemNames({int limit = 8, String? listId}) {
     if (_purchaseHistory.isEmpty) return [];
     
-    // Group purchases by item name
+    // Use current selected list if no listId provided
+    final targetListId = listId ?? _selectedListId;
+    if (targetListId == null) return [];
+    
+    // Filter purchases by listId (category-specific)
+    final categoryPurchases = _purchaseHistory
+        .where((purchase) => purchase.listId == targetListId)
+        .toList();
+    
+    if (categoryPurchases.isEmpty) return [];
+    
+    // Group purchases by item name or item ID
     final Map<String, List<Purchase>> grouped = {};
-    for (final purchase in _purchaseHistory) {
-      grouped.putIfAbsent(purchase.itemName, () => []).add(purchase);
+    for (final purchase in categoryPurchases) {
+      // Group by itemId if available, otherwise by itemName
+      final key = purchase.itemId.isNotEmpty ? purchase.itemId : purchase.itemName;
+      grouped.putIfAbsent(key, () => []).add(purchase);
     }
     
     // Calculate score for each item (frequency × recency)
     final Map<String, double> scores = {};
+    final Map<String, String> keyToName = {}; // Map key to latest item name
     final now = DateTime.now();
     
     for (final entry in grouped.entries) {
-      final itemName = entry.key;
+      final key = entry.key;
       final purchases = entry.value;
+      
+      // Get the most recent item name (for renamed items)
+      keyToName[key] = purchases.last.itemName;
       
       // Frequency: number of times purchased
       final frequency = purchases.length.toDouble();
@@ -287,17 +363,29 @@ class GroceryProvider extends ChangeNotifier {
       final recency = 1.0 / daysSinceLastPurchase;
       
       // Score = frequency × recency
-      scores[itemName] = frequency * recency;
+      scores[key] = frequency * recency;
     }
     
     // Sort by score and return top items
     final sortedItems = scores.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     
-    final suggestions = sortedItems
-        .take(limit)
-        .map((entry) => entry.key)
-        .toList();
+    // Deduplicate by normalized name (to avoid showing both "eggs" and "eggs 1")
+    final seenNames = <String>{};
+    final suggestions = <String>[];
+    
+    for (final entry in sortedItems) {
+      final itemName = keyToName[entry.key]!;
+      final normalizedName = itemName.toLowerCase().trim();
+      
+      // Only add if we haven't seen this normalized name before
+      if (!seenNames.contains(normalizedName)) {
+        seenNames.add(normalizedName);
+        suggestions.add(itemName);
+        
+        if (suggestions.length >= limit) break;
+      }
+    }
     
     return suggestions;
   }
