@@ -8,6 +8,7 @@ import '../widgets/list_selector.dart';
 import '../widgets/bullet_item.dart';
 import '../widgets/add_edit_item_sheet.dart';
 import '../widgets/suggestions_sheet.dart';
+import '../widgets/magic_list_sheet.dart';
 import '../widgets/expiring_banner.dart';
 
 class ListsPage extends StatefulWidget {
@@ -154,9 +155,9 @@ class _ListsPageState extends State<ListsPage> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _showSuggestionsSheet(context, provider),
-                    icon: const Icon(Icons.lightbulb_outline),
-                    label: const Text('Suggestions'),
+                    onPressed: () => _showMagicListSheet(context, provider),
+                    icon: const Icon(Icons.auto_fix_high),
+                    label: const Text('Magic List'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -351,6 +352,48 @@ class _ListsPageState extends State<ListsPage> {
       builder: (sheetContext) => SuggestionsSheet(
         onItemAdded: (itemName) {
           _showOverlayNotification(context, itemName);
+        },
+      ),
+    );
+  }
+
+  void _showMagicListSheet(BuildContext context, GroceryProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => MagicListSheet(
+        onAddAll: (items) async {
+          final selectedList = provider.selectedList;
+          if (selectedList == null) return;
+
+          // Find the last empty bullet point
+          int? emptyBulletIndex;
+          for (int i = selectedList.items.length - 1; i >= 0; i--) {
+            if (selectedList.items[i].name.trim().isEmpty) {
+              emptyBulletIndex = i;
+              break;
+            }
+          }
+
+          // Add all items before the empty bullet
+          for (final itemName in items) {
+            final newItem = GroceryItem(
+              id: const Uuid().v4(),
+              name: itemName,
+            );
+            
+            if (emptyBulletIndex != null) {
+              await provider.addItem(newItem, position: emptyBulletIndex);
+              emptyBulletIndex++; // Increment for next item
+            } else {
+              await provider.addItem(newItem);
+            }
+          }
+
+          // Show notification
+          if (context.mounted) {
+            _showOverlayNotification(context, '${items.length} items added');
+          }
         },
       ),
     );
