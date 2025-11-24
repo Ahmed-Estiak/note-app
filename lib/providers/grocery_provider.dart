@@ -251,12 +251,46 @@ class GroceryProvider extends ChangeNotifier {
     final targetListId = listId ?? _selectedListId;
     if (targetListId == null) return;
 
-    // Find itemId for the original name
-    final itemId = getItemIdForSuggestion(originalName, listId: targetListId);
-    if (itemId == null || itemId.isEmpty) return;
+    final normalizedOriginal = originalName.toLowerCase().trim();
+    final normalizedNew = newName.toLowerCase().trim();
+    
+    // If names are the same (just capitalization change), update and return
+    if (normalizedOriginal == normalizedNew) {
+      final itemId = getItemIdForSuggestion(originalName, listId: targetListId);
+      if (itemId != null && itemId.isNotEmpty) {
+        _updatePurchaseHistoryItemName(itemId, newName);
+        notifyListeners();
+        await save();
+      }
+      return;
+    }
 
-    // Update all purchases with this itemId
-    _updatePurchaseHistoryItemName(itemId, newName);
+    // Find itemId for the original name (the one being renamed FROM)
+    final oldItemId = getItemIdForSuggestion(originalName, listId: targetListId);
+    if (oldItemId == null || oldItemId.isEmpty) return;
+
+    // Check if the new name already exists (merge scenario)
+    final existingItemId = getItemIdForSuggestion(newName, listId: targetListId);
+    
+    if (existingItemId != null && existingItemId.isNotEmpty && existingItemId != oldItemId) {
+      // MERGE: New name already exists with a different itemId
+      // Transfer all purchases from oldItemId to existingItemId
+      for (int i = 0; i < _purchaseHistory.length; i++) {
+        if (_purchaseHistory[i].itemId == oldItemId) {
+          _purchaseHistory[i] = Purchase(
+            itemName: normalizedNew,
+            itemId: existingItemId, // Use the existing itemId
+            listId: _purchaseHistory[i].listId,
+            boughtAt: _purchaseHistory[i].boughtAt,
+            price: _purchaseHistory[i].price,
+            category: _purchaseHistory[i].category,
+          );
+        }
+      }
+    } else {
+      // RENAME: New name doesn't exist, just update the name
+      _updatePurchaseHistoryItemName(oldItemId, newName);
+    }
     
     notifyListeners();
     await save();

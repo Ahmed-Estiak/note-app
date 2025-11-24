@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/grocery_provider.dart';
@@ -26,6 +27,7 @@ class _MagicListSheetState extends State<MagicListSheet> {
   final List<TextEditingController> _controllers = [];
   final List<bool> _deletedItems = [];
   final List<String> _originalNames = []; // Track original suggestion names
+  final Map<int, Timer?> _debounceTimers = {}; // Debounce timers per controller
   bool _initialized = false;
 
   @override
@@ -36,10 +38,34 @@ class _MagicListSheetState extends State<MagicListSheet> {
 
   @override
   void dispose() {
+    // Cancel all pending timers
+    for (final timer in _debounceTimers.values) {
+      timer?.cancel();
+    }
+    _debounceTimers.clear();
+    
+    // Save final values before disposing
+    _saveFinalEdits();
+    
     for (final controller in _controllers) {
       controller.dispose();
     }
     super.dispose();
+  }
+  
+  // Save all current edits immediately (called on dispose)
+  void _saveFinalEdits() {
+    for (int i = 0; i < _controllers.length; i++) {
+      if (!_deletedItems[i]) {
+        final originalName = _originalNames[i];
+        final currentText = _controllers[i].text.trim().toLowerCase();
+        final normalizedOriginal = originalName.toLowerCase().trim();
+        
+        if (currentText.isNotEmpty && currentText != normalizedOriginal) {
+          widget.onNameEdited(originalName, currentText);
+        }
+      }
+    }
   }
 
   void _deleteItem(int index) {
@@ -99,12 +125,22 @@ class _MagicListSheetState extends State<MagicListSheet> {
         final displayName = widget.editedNames[originalName] ?? capitalizedOriginal;
         
         final controller = TextEditingController(text: displayName);
+        final controllerIndex = i; // Capture index for debounce timer
         
-        // Listen for text changes to track edits
+        // Listen for text changes with debouncing
         controller.addListener(() {
-          final currentText = controller.text.trim();
-          if (currentText.isNotEmpty && currentText != capitalizedOriginal) {
-            widget.onNameEdited(originalName, currentText);
+          final currentText = controller.text.trim().toLowerCase();
+          final normalizedOriginal = originalName.toLowerCase().trim();
+          
+          // Cancel previous timer for this controller
+          _debounceTimers[controllerIndex]?.cancel();
+          
+          // Only update if text is different from original
+          if (currentText.isNotEmpty && currentText != normalizedOriginal) {
+            // Set a new timer - only call onNameEdited after 500ms of no typing
+            _debounceTimers[controllerIndex] = Timer(const Duration(milliseconds: 500), () {
+              widget.onNameEdited(originalName, currentText);
+            });
           }
         });
         
