@@ -59,7 +59,8 @@ class _MagicListSheetState extends State<MagicListSheet> {
     for (int i = 0; i < _controllers.length; i++) {
       if (!_deletedItems[i]) {
         final originalName = _originalNames[i];
-        final currentText = _controllers[i].text.trim().toLowerCase();
+        final currentText = _controllers[i].text.trim();
+        final normalizedCurrent = currentText.toLowerCase();
         final normalizedOriginal = originalName.toLowerCase().trim();
         
         if (currentText.isEmpty) {
@@ -77,8 +78,8 @@ class _MagicListSheetState extends State<MagicListSheet> {
           continue;
         }
         
-        // Valid: save the edit
-        if (currentText != normalizedOriginal) {
+        // Valid: save the edit with original formatting
+        if (normalizedCurrent != normalizedOriginal) {
           widget.onNameEdited(originalName, currentText);
         }
       }
@@ -146,24 +147,21 @@ class _MagicListSheetState extends State<MagicListSheet> {
         
         // Listen for text changes with debouncing
         controller.addListener(() {
-          final currentText = controller.text.trim().toLowerCase();
+          final currentText = controller.text.trim();
+          final normalizedCurrent = currentText.toLowerCase();
           final normalizedOriginal = originalName.toLowerCase().trim();
           
           // Cancel previous timer for this controller
           _debounceTimers[controllerIndex]?.cancel();
           
           // Only update if text is different from original
-          if (currentText.isNotEmpty && currentText != normalizedOriginal) {
-            // Detect if text contains # or * symbols (parsing mode)
-            final hasSymbols = currentText.contains('#') || currentText.contains('*');
-            
-            // Use shorter delay for text with symbols to prevent data loss
-            final delay = hasSymbols 
-                ? const Duration(milliseconds: 150) 
-                : const Duration(milliseconds: 300);
+          if (currentText.isNotEmpty && normalizedCurrent != normalizedOriginal) {
+            // Use very short delay to minimize data loss while still debouncing
+            const delay = Duration(milliseconds: 50);
             
             // Set a new timer - call onNameEdited after delay
             _debounceTimers[controllerIndex] = Timer(delay, () {
+              // Save with original formatting (not lowercase)
               widget.onNameEdited(originalName, currentText);
             });
           }

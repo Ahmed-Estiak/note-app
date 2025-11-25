@@ -40,6 +40,7 @@ class _BulletItemState extends State<BulletItem> {
   late FocusNode _focusNode;
   bool _isEditing = false;
   String _previousText = '';
+  bool _isUpdatingFromParsing = false;
 
   @override
   void initState() {
@@ -55,6 +56,11 @@ class _BulletItemState extends State<BulletItem> {
       
       // Save changes when focus is lost
       if (!_focusNode.hasFocus) {
+        // Skip if we're in the middle of parsing from onSubmitted
+        if (_isUpdatingFromParsing) {
+          return;
+        }
+        
         final text = _controller.text.trim();
         
         if (text.isEmpty) {
@@ -94,7 +100,8 @@ class _BulletItemState extends State<BulletItem> {
   @override
   void didUpdateWidget(BulletItem oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.item.name != oldWidget.item.name) {
+    // Don't update controller if we're in the middle of parsing
+    if (!_isUpdatingFromParsing && widget.item.name != oldWidget.item.name) {
       _controller.text = widget.item.name;
     }
   }
@@ -150,7 +157,13 @@ class _BulletItemState extends State<BulletItem> {
                         _focusNode.requestFocus();
                         widget.onEmptySubmitted?.call();
                       } else {
-                        // Parse the text
+                        // Set flag to prevent didUpdateWidget from interfering
+                        _isUpdatingFromParsing = true;
+                        
+                        // IMPORTANT: Call onTextChanged FIRST to parse and save data
+                        widget.onTextChanged(text);
+                        
+                        // Parse the text to update the display
                         final parsed = ItemParser.parse(text);
                         
                         if (parsed.isValid) {
@@ -161,7 +174,15 @@ class _BulletItemState extends State<BulletItem> {
                           );
                         }
                         
-                        widget.onTextChanged(text);
+                        // Reset flag after a brief delay to allow state to settle
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          if (mounted) {
+                            setState(() {
+                              _isUpdatingFromParsing = false;
+                            });
+                          }
+                        });
+                        
                         widget.onSubmitted(text);
                       }
                     },

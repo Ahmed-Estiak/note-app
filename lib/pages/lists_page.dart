@@ -256,7 +256,9 @@ class _ListsPageState extends State<ListsPage> {
         spacing: 8,
         runSpacing: 8,
         children: filteredSuggestions.map((suggestion) {
-          final displayName = suggestion[0].toUpperCase() + suggestion.substring(1);
+          // Use edited name if available, otherwise capitalize original
+          final editedName = _editedMagicListNames[suggestion];
+          final displayName = editedName ?? (suggestion[0].toUpperCase() + suggestion.substring(1));
           
           return ActionChip(
             label: Text(displayName),
