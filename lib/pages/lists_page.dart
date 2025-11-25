@@ -134,6 +134,8 @@ class _ListsPageState extends State<ListsPage> {
                           name: parsed.name,
                           quantity: parsed.quantity,
                           price: parsed.price,
+                          clearQuantity: parsed.quantity == null,
+                          clearPrice: parsed.price == null,
                         );
                         provider.updateItem(item.id, updatedItem);
                       }
