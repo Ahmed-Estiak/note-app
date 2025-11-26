@@ -56,9 +56,12 @@ class _MagicListSheetState extends State<MagicListSheet> {
     final normalizedCurrent = currentText.toLowerCase();
     final normalizedOriginal = originalName.toLowerCase().trim();
     
+    print('DEBUG _saveEdit: index=$index, originalName="$originalName", currentText="$currentText"');
+    
     if (currentText.isEmpty) {
       // Empty text: revert to original name
       _controllers[index].text = originalName[0].toUpperCase() + originalName.substring(1);
+      print('DEBUG _saveEdit: Empty text, reverted to original');
       return;
     }
     
@@ -68,12 +71,16 @@ class _MagicListSheetState extends State<MagicListSheet> {
     if (!parsed.isValid) {
       // Invalid (e.g., only "# qty"): revert to original name
       _controllers[index].text = originalName[0].toUpperCase() + originalName.substring(1);
+      print('DEBUG _saveEdit: Invalid parsed name, reverted to original');
       return;
     }
     
     // Valid: save the edit with original formatting
     if (normalizedCurrent != normalizedOriginal) {
+      print('DEBUG _saveEdit: Saving edit - calling onNameEdited');
       widget.onNameEdited(originalName, currentText);
+    } else {
+      print('DEBUG _saveEdit: No change detected, not saving');
     }
   }
 
@@ -106,7 +113,7 @@ class _MagicListSheetState extends State<MagicListSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<GroceryProvider>();
+    final provider = context.read<GroceryProvider>();
     final selectedList = provider.selectedList;
 
     // Initialize controllers dynamically based on available suggestions (only once)
@@ -132,6 +139,8 @@ class _MagicListSheetState extends State<MagicListSheet> {
         
         // Check if this suggestion has been edited before
         final displayName = widget.editedNames[originalName] ?? capitalizedOriginal;
+        
+        print('DEBUG init: index=$i, originalName="$originalName", displayName="$displayName"');
         
         final controller = TextEditingController(text: displayName);
         final focusNode = FocusNode();
@@ -202,6 +211,8 @@ class _MagicListSheetState extends State<MagicListSheet> {
                           isDense: true,
                         ),
                         style: const TextStyle(fontSize: 16),
+                        enableInteractiveSelection: true,
+                        textCapitalization: TextCapitalization.sentences,
                         onSubmitted: (value) {
                           // Save on Enter key press
                           _saveEdit(index);
