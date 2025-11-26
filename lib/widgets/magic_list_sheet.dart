@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/grocery_provider.dart';
@@ -26,9 +25,9 @@ class MagicListSheet extends StatefulWidget {
 
 class _MagicListSheetState extends State<MagicListSheet> {
   final List<TextEditingController> _controllers = [];
+  final List<FocusNode> _focusNodes = [];
   final List<bool> _deletedItems = [];
   final List<String> _originalNames = []; // Track original suggestion names
-  final Map<int, Timer?> _debounceTimers = {}; // Debounce timers per controller
   bool _initialized = false;
 
   @override
@@ -39,50 +38,42 @@ class _MagicListSheetState extends State<MagicListSheet> {
 
   @override
   void dispose() {
-    // Cancel all pending timers
-    for (final timer in _debounceTimers.values) {
-      timer?.cancel();
-    }
-    _debounceTimers.clear();
-    
-    // Save final values before disposing
-    _saveFinalEdits();
-    
     for (final controller in _controllers) {
       controller.dispose();
+    }
+    for (final focusNode in _focusNodes) {
+      focusNode.dispose();
     }
     super.dispose();
   }
   
-  // Save all current edits immediately (called on dispose)
-  void _saveFinalEdits() {
-    for (int i = 0; i < _controllers.length; i++) {
-      if (!_deletedItems[i]) {
-        final originalName = _originalNames[i];
-        final currentText = _controllers[i].text.trim();
-        final normalizedCurrent = currentText.toLowerCase();
-        final normalizedOriginal = originalName.toLowerCase().trim();
-        
-        if (currentText.isEmpty) {
-          // Empty text: revert to original name
-          _controllers[i].text = originalName[0].toUpperCase() + originalName.substring(1);
-          continue;
-        }
-        
-        // Parse to check if name is valid
-        final parsed = ItemParser.parse(currentText);
-        
-        if (!parsed.isValid) {
-          // Invalid (e.g., only "# qty"): revert to original name
-          _controllers[i].text = originalName[0].toUpperCase() + originalName.substring(1);
-          continue;
-        }
-        
-        // Valid: save the edit with original formatting
-        if (normalizedCurrent != normalizedOriginal) {
-          widget.onNameEdited(originalName, currentText);
-        }
-      }
+  // Save edit when user presses Enter or loses focus
+  void _saveEdit(int index) {
+    if (index >= _controllers.length || _deletedItems[index]) return;
+    
+    final originalName = _originalNames[index];
+    final currentText = _controllers[index].text.trim();
+    final normalizedCurrent = currentText.toLowerCase();
+    final normalizedOriginal = originalName.toLowerCase().trim();
+    
+    if (currentText.isEmpty) {
+      // Empty text: revert to original name
+      _controllers[index].text = originalName[0].toUpperCase() + originalName.substring(1);
+      return;
+    }
+    
+    // Parse to check if name is valid
+    final parsed = ItemParser.parse(currentText);
+    
+    if (!parsed.isValid) {
+      // Invalid (e.g., only "# qty"): revert to original name
+      _controllers[index].text = originalName[0].toUpperCase() + originalName.substring(1);
+      return;
+    }
+    
+    // Valid: save the edit with original formatting
+    if (normalizedCurrent != normalizedOriginal) {
+      widget.onNameEdited(originalName, currentText);
     }
   }
 
@@ -143,31 +134,18 @@ class _MagicListSheetState extends State<MagicListSheet> {
         final displayName = widget.editedNames[originalName] ?? capitalizedOriginal;
         
         final controller = TextEditingController(text: displayName);
-        final controllerIndex = i; // Capture index for debounce timer
+        final focusNode = FocusNode();
+        final controllerIndex = i; // Capture index for focus listener
         
-        // Listen for text changes with debouncing
-        controller.addListener(() {
-          final currentText = controller.text.trim();
-          final normalizedCurrent = currentText.toLowerCase();
-          final normalizedOriginal = originalName.toLowerCase().trim();
-          
-          // Cancel previous timer for this controller
-          _debounceTimers[controllerIndex]?.cancel();
-          
-          // Only update if text is different from original
-          if (currentText.isNotEmpty && normalizedCurrent != normalizedOriginal) {
-            // Use very short delay to minimize data loss while still debouncing
-            const delay = Duration(milliseconds: 50);
-            
-            // Set a new timer - call onNameEdited after delay
-            _debounceTimers[controllerIndex] = Timer(delay, () {
-              // Save with original formatting (not lowercase)
-              widget.onNameEdited(originalName, currentText);
-            });
+        // Listen for focus changes - save when user taps outside
+        focusNode.addListener(() {
+          if (!focusNode.hasFocus) {
+            _saveEdit(controllerIndex);
           }
         });
         
         _controllers.add(controller);
+        _focusNodes.add(focusNode);
         _deletedItems.add(false);
         _originalNames.add(originalName);
       }
@@ -217,12 +195,17 @@ class _MagicListSheetState extends State<MagicListSheet> {
                     Expanded(
                       child: TextField(
                         controller: _controllers[index],
+                        focusNode: _focusNodes[index],
                         decoration: InputDecoration(
                           hintText: 'Item ${index + 1}',
                           border: InputBorder.none,
                           isDense: true,
                         ),
                         style: const TextStyle(fontSize: 16),
+                        onSubmitted: (value) {
+                          // Save on Enter key press
+                          _saveEdit(index);
+                        },
                       ),
                     ),
                     IconButton(
