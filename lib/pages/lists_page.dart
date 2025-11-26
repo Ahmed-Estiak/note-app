@@ -280,6 +280,24 @@ class _ListsPageState extends State<ListsPage> {
     // Parse the item name for quantity and price
     final parsed = ItemParser.parse(itemName);
     
+    // If item has symbols (different from parsed name), clean up purchase history
+    final normalizedOriginal = itemName.toLowerCase().trim();
+    final normalizedParsed = parsed.name.toLowerCase().trim();
+    
+    if (normalizedOriginal != normalizedParsed) {
+      // Update purchase history: "beef #3456" → "beef" globally
+      await provider.updatePurchaseHistoryByName(
+        normalizedOriginal,
+        normalizedParsed,
+        listId: selectedList.id,
+      );
+      
+      // Remove from edited names map to clean up UI state
+      setState(() {
+        _editedMagicListNames.remove(normalizedOriginal);
+      });
+    }
+    
     // Try to find existing itemId for this suggestion (to preserve history)
     // Use the parsed name for lookup
     final existingItemId = provider.getItemIdForSuggestion(parsed.name);
@@ -307,8 +325,8 @@ class _ListsPageState extends State<ListsPage> {
       await provider.addItem(newItem);
     }
     
-    // Show overlay notification
-    _showOverlayNotification(context, itemName);
+    // Show overlay notification with parsed name
+    _showOverlayNotification(context, parsed.name);
   }
 
   Future<void> _addNewItem(GroceryProvider provider, int position) async {
