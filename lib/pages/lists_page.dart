@@ -258,11 +258,15 @@ class _ListsPageState extends State<ListsPage> {
         children: filteredSuggestions.map((suggestion) {
           // Use edited name if available, otherwise capitalize original
           final editedName = _editedMagicListNames[suggestion];
-          final displayName = editedName ?? (suggestion[0].toUpperCase() + suggestion.substring(1));
+          final rawDisplayName = editedName ?? (suggestion[0].toUpperCase() + suggestion.substring(1));
+          
+          // Parse to get clean name (remove #qty *price symbols)
+          final parsed = ItemParser.parse(rawDisplayName);
+          final displayName = parsed.name[0].toUpperCase() + parsed.name.substring(1);
           
           return ActionChip(
             label: Text(displayName),
-            onPressed: () => _addQuickSuggestion(context, provider, displayName),
+            onPressed: () => _addQuickSuggestion(context, provider, rawDisplayName),
             backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
             labelStyle: TextStyle(
               color: Theme.of(context).colorScheme.onSecondaryContainer,
@@ -279,6 +283,19 @@ class _ListsPageState extends State<ListsPage> {
     
     // Parse the item name for quantity and price
     final parsed = ItemParser.parse(itemName);
+    
+    print('DEBUG _addQuickSuggestion: itemName="$itemName", parsed="${parsed.name}"');
+    
+    // If the original itemName had symbols (different from parsed name),
+    // update purchase history to rename it globally
+    if (itemName.toLowerCase().trim() != parsed.name.toLowerCase().trim()) {
+      print('DEBUG _addQuickSuggestion: Updating purchase history from "$itemName" to "${parsed.name}"');
+      await provider.updatePurchaseHistoryByName(
+        itemName.toLowerCase().trim(),
+        parsed.name,
+        listId: selectedList.id,
+      );
+    }
     
     // Try to find existing itemId for this suggestion (to preserve history)
     // Use the parsed name for lookup
@@ -307,8 +324,8 @@ class _ListsPageState extends State<ListsPage> {
       await provider.addItem(newItem);
     }
     
-    // Show overlay notification
-    _showOverlayNotification(context, itemName);
+    // Show overlay notification with parsed name
+    _showOverlayNotification(context, parsed.name);
   }
 
   Future<void> _addNewItem(GroceryProvider provider, int position) async {
