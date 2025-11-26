@@ -397,7 +397,9 @@ class _ListsPageState extends State<ListsPage> {
     final selectedList = provider.selectedList;
     if (selectedList == null) return;
 
-    final checkedCount = selectedList.items.where((item) => item.done).length;
+    // Get checked items before completing (to clean up edited names)
+    final checkedItems = selectedList.items.where((item) => item.done).toList();
+    final checkedCount = checkedItems.length;
 
     final result = await showDialog<bool>(
       context: context,
@@ -422,6 +424,16 @@ class _ListsPageState extends State<ListsPage> {
 
     if (result == true) {
       await provider.completeShopping();
+      
+      // Clean up edited names for completed items
+      // This ensures items with symbols (e.g., "Beef #3457") don't reappear in suggestions
+      setState(() {
+        for (final item in checkedItems) {
+          final normalizedName = item.name.toLowerCase().trim();
+          _editedMagicListNames.remove(normalizedName);
+        }
+      });
+      
       if (context.mounted) {
         _showOverlayNotification(context, 'Shopping trip completed!');
       }
