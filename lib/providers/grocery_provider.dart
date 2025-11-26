@@ -13,10 +13,12 @@ class GroceryProvider extends ChangeNotifier {
   List<Purchase> _purchaseHistory = [];
   String? _selectedListId;
   bool _isLoaded = false;
+  bool _hasSeenInstructions = false;
 
   List<GroceryList> get lists => _lists;
   List<Purchase> get purchaseHistory => _purchaseHistory;
   bool get isLoaded => _isLoaded;
+  bool get hasSeenInstructions => _hasSeenInstructions;
   
   GroceryList? get selectedList {
     if (_selectedListId == null) return null;
@@ -79,6 +81,9 @@ class GroceryProvider extends ChangeNotifier {
         _selectedListId = _lists.first.id;
       }
       
+      // Load instructions flag
+      _hasSeenInstructions = prefs.getBool('has_seen_instructions') ?? false;
+      
       _isLoaded = true;
       notifyListeners();
     } catch (e) {
@@ -108,6 +113,19 @@ class GroceryProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error saving data: $e');
+    }
+  }
+
+  // Mark instructions as seen
+  Future<void> markInstructionsAsSeen() async {
+    _hasSeenInstructions = true;
+    notifyListeners();
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_seen_instructions', true);
+    } catch (e) {
+      debugPrint('Error saving instructions flag: $e');
     }
   }
 

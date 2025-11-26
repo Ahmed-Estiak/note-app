@@ -10,6 +10,7 @@ import '../widgets/add_edit_item_sheet.dart';
 import '../widgets/suggestions_sheet.dart';
 import '../widgets/magic_list_sheet.dart';
 import '../widgets/expiring_banner.dart';
+import '../widgets/instructions_dialog.dart';
 import '../utils/item_parser.dart';
 
 class ListsPage extends StatefulWidget {
@@ -26,6 +27,23 @@ class _ListsPageState extends State<ListsPage> {
   String? _previousListId;
   final Set<String> _deletedMagicListSuggestions = {};
   final Map<String, String> _editedMagicListNames = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // Show instructions dialog on first launch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowInstructions();
+    });
+  }
+
+  Future<void> _checkAndShowInstructions() async {
+    final provider = context.read<GroceryProvider>();
+    if (!provider.hasSeenInstructions) {
+      await InstructionsDialog.show(context);
+      await provider.markInstructionsAsSeen();
+    }
+  }
 
   @override
   void dispose() {
@@ -99,6 +117,13 @@ class _ListsPageState extends State<ListsPage> {
       appBar: AppBar(
         title: const Text('Autonotic'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'How to use # and *',
+            onPressed: () => InstructionsDialog.show(context),
+          ),
+        ],
       ),
       body: Column(
         children: [
