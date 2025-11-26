@@ -280,8 +280,11 @@ class _ListsPageState extends State<ListsPage> {
     // Parse the item name for quantity and price
     final parsed = ItemParser.parse(itemName);
     
-    // If item has symbols (different from parsed name), clean up purchase history
+    // Get itemId for ORIGINAL name (before renaming) to preserve history
     final normalizedOriginal = itemName.toLowerCase().trim();
+    final existingItemId = provider.getItemIdForSuggestion(normalizedOriginal);
+    
+    // If item has symbols (different from parsed name), clean up purchase history
     final normalizedParsed = parsed.name.toLowerCase().trim();
     
     if (normalizedOriginal != normalizedParsed) {
@@ -298,10 +301,7 @@ class _ListsPageState extends State<ListsPage> {
       });
     }
     
-    // Try to find existing itemId for this suggestion (to preserve history)
-    // Use the parsed name for lookup
-    final existingItemId = provider.getItemIdForSuggestion(parsed.name);
-    
+    // Create item with the itemId we got from the original name
     final newItem = GroceryItem(
       id: existingItemId ?? const Uuid().v4(),
       name: parsed.name,
