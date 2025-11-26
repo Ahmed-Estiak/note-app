@@ -258,15 +258,11 @@ class _ListsPageState extends State<ListsPage> {
         children: filteredSuggestions.map((suggestion) {
           // Use edited name if available, otherwise capitalize original
           final editedName = _editedMagicListNames[suggestion];
-          final rawDisplayName = editedName ?? (suggestion[0].toUpperCase() + suggestion.substring(1));
-          
-          // Parse to get clean name (remove #qty *price symbols)
-          final parsed = ItemParser.parse(rawDisplayName);
-          final displayName = parsed.name[0].toUpperCase() + parsed.name.substring(1);
+          final displayName = editedName ?? (suggestion[0].toUpperCase() + suggestion.substring(1));
           
           return ActionChip(
             label: Text(displayName),
-            onPressed: () => _addQuickSuggestion(context, provider, rawDisplayName),
+            onPressed: () => _addQuickSuggestion(context, provider, displayName),
             backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
             labelStyle: TextStyle(
               color: Theme.of(context).colorScheme.onSecondaryContainer,
@@ -283,19 +279,6 @@ class _ListsPageState extends State<ListsPage> {
     
     // Parse the item name for quantity and price
     final parsed = ItemParser.parse(itemName);
-    
-    print('DEBUG _addQuickSuggestion: itemName="$itemName", parsed="${parsed.name}"');
-    
-    // If the original itemName had symbols (different from parsed name),
-    // update purchase history to rename it globally
-    if (itemName.toLowerCase().trim() != parsed.name.toLowerCase().trim()) {
-      print('DEBUG _addQuickSuggestion: Updating purchase history from "$itemName" to "${parsed.name}"');
-      await provider.updatePurchaseHistoryByName(
-        itemName.toLowerCase().trim(),
-        parsed.name,
-        listId: selectedList.id,
-      );
-    }
     
     // Try to find existing itemId for this suggestion (to preserve history)
     // Use the parsed name for lookup
@@ -324,8 +307,8 @@ class _ListsPageState extends State<ListsPage> {
       await provider.addItem(newItem);
     }
     
-    // Show overlay notification with parsed name
-    _showOverlayNotification(context, parsed.name);
+    // Show overlay notification
+    _showOverlayNotification(context, itemName);
   }
 
   Future<void> _addNewItem(GroceryProvider provider, int position) async {
@@ -452,21 +435,15 @@ class _ListsPageState extends State<ListsPage> {
           });
         },
         onNameEdited: (originalName, editedName) async {
-          // Parse the edited name to extract clean item name (without #qty *price)
-          final parsed = ItemParser.parse(editedName);
-          
-          print('DEBUG onNameEdited: original="$originalName", edited="$editedName", parsed="${parsed.name}"');
-          
-          // Store FULL text (with symbols) in local map for UI display
+          // Store in local map for UI persistence
           setState(() {
             _editedMagicListNames[originalName] = editedName;
           });
           
-          // Update purchase history with ONLY the parsed name (clean item name)
-          // This ensures suggestions show "beef" not "beef #4"
+          // Immediately update purchase history
           await provider.updatePurchaseHistoryByName(
             originalName,
-            parsed.name,
+            editedName,
             listId: provider.selectedList?.id,
           );
         },
@@ -487,8 +464,6 @@ class _ListsPageState extends State<ListsPage> {
           for (final itemName in items) {
             // Parse the item name for quantity and price
             final parsed = ItemParser.parse(itemName);
-            
-            print('DEBUG onAddAll: itemName="$itemName", parsed="${parsed.name}", qty="${parsed.quantity}", price="${parsed.price}"');
             
             // Try to find existing itemId for this item (to preserve history)
             // Use the parsed name for lookup
