@@ -435,15 +435,21 @@ class _ListsPageState extends State<ListsPage> {
           });
         },
         onNameEdited: (originalName, editedName) async {
-          // Store in local map for UI persistence
+          // Parse the edited name to extract clean item name (without #qty *price)
+          final parsed = ItemParser.parse(editedName);
+          
+          print('DEBUG onNameEdited: original="$originalName", edited="$editedName", parsed="${parsed.name}"');
+          
+          // Store FULL text (with symbols) in local map for UI display
           setState(() {
             _editedMagicListNames[originalName] = editedName;
           });
           
-          // Immediately update purchase history
+          // Update purchase history with ONLY the parsed name (clean item name)
+          // This ensures suggestions show "beef" not "beef #4"
           await provider.updatePurchaseHistoryByName(
             originalName,
-            editedName,
+            parsed.name,
             listId: provider.selectedList?.id,
           );
         },
@@ -464,6 +470,8 @@ class _ListsPageState extends State<ListsPage> {
           for (final itemName in items) {
             // Parse the item name for quantity and price
             final parsed = ItemParser.parse(itemName);
+            
+            print('DEBUG onAddAll: itemName="$itemName", parsed="${parsed.name}", qty="${parsed.quantity}", price="${parsed.price}"');
             
             // Try to find existing itemId for this item (to preserve history)
             // Use the parsed name for lookup
