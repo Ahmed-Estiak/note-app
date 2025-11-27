@@ -11,6 +11,7 @@ import '../widgets/suggestions_sheet.dart';
 import '../widgets/magic_list_sheet.dart';
 import '../widgets/expiring_banner.dart';
 import '../widgets/instructions_dialog.dart';
+import '../pages/trip_history_page.dart';
 import '../utils/item_parser.dart';
 
 class ListsPage extends StatefulWidget {
@@ -118,6 +119,16 @@ class _ListsPageState extends State<ListsPage> {
         title: const Text('Autonotic'),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'Trip History',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TripHistoryPage()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.help_outline),
             tooltip: 'How to use # and *',

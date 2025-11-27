@@ -5,18 +5,21 @@ import 'package:uuid/uuid.dart';
 import '../models/grocery_item.dart';
 import '../models/grocery_list.dart';
 import '../models/purchase.dart';
+import '../models/trip_history.dart';
 
 class GroceryProvider extends ChangeNotifier {
   final _uuid = const Uuid();
   
   List<GroceryList> _lists = [];
   List<Purchase> _purchaseHistory = [];
+  List<TripHistory> _tripHistory = [];
   String? _selectedListId;
   bool _isLoaded = false;
   bool _hasSeenInstructions = false;
 
   List<GroceryList> get lists => _lists;
   List<Purchase> get purchaseHistory => _purchaseHistory;
+  List<TripHistory> get tripHistory => _tripHistory;
   bool get isLoaded => _isLoaded;
   bool get hasSeenInstructions => _hasSeenInstructions;
   
@@ -70,6 +73,13 @@ class GroceryProvider extends ChangeNotifier {
         _purchaseHistory = decoded.map((json) => Purchase.fromJson(json)).toList();
       }
       
+      // Load trip history
+      final tripHistoryJson = prefs.getString('trip_history');
+      if (tripHistoryJson != null) {
+        final List<dynamic> decoded = jsonDecode(tripHistoryJson);
+        _tripHistory = decoded.map((json) => TripHistory.fromJson(json)).toList();
+      }
+      
       // Load selected list ID
       final savedListId = prefs.getString('selected_list_id');
       if (savedListId != null && _lists.any((list) => list.id == savedListId)) {
@@ -106,6 +116,10 @@ class GroceryProvider extends ChangeNotifier {
       // Save purchase history
       final historyJson = jsonEncode(_purchaseHistory.map((p) => p.toJson()).toList());
       await prefs.setString('purchase_history', historyJson);
+      
+      // Save trip history
+      final tripHistoryJson = jsonEncode(_tripHistory.map((t) => t.toJson()).toList());
+      await prefs.setString('trip_history', tripHistoryJson);
       
       // Save selected list ID
       if (_selectedListId != null) {
@@ -371,6 +385,26 @@ class GroceryProvider extends ChangeNotifier {
         price: item.price,
         category: item.category,
       ));
+    }
+    
+    // Add to trip history
+    if (checkedItems.isNotEmpty) {
+      final selectedList = _lists[listIndex];
+      final tripItems = checkedItems.map((item) => TripItem(
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      )).toList();
+      
+      final trip = TripHistory(
+        id: _uuid.v4(),
+        completedAt: now,
+        listName: selectedList.name,
+        listId: _selectedListId!,
+        items: tripItems,
+      );
+      
+      _tripHistory.insert(0, trip); // Add to beginning (newest first)
     }
     
     // Remove checked items from list
