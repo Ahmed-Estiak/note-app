@@ -121,13 +121,14 @@ class _ListsPageState extends State<ListsPage> {
           style: TextStyle(fontSize: 16),
         ),
         centerTitle: true,
-        toolbarHeight: 40,
+        toolbarHeight: 30,
         titleSpacing: 0,
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 4),
         actions: [
           IconButton(
             icon: const Icon(Icons.history, size: 18),
             tooltip: 'Trip History',
-            padding: const EdgeInsets.all(4),
+            padding: const EdgeInsets.all(2),
             constraints: const BoxConstraints(),
             onPressed: () {
               Navigator.push(
@@ -139,7 +140,7 @@ class _ListsPageState extends State<ListsPage> {
           IconButton(
             icon: const Icon(Icons.help_outline, size: 18),
             tooltip: 'How to use # and *',
-            padding: const EdgeInsets.all(4),
+            padding: const EdgeInsets.all(2),
             constraints: const BoxConstraints(),
             onPressed: () => InstructionsDialog.show(context),
           ),

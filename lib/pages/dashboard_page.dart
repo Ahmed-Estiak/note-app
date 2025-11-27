@@ -16,11 +16,17 @@ class DashboardPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Expense Dashboard'),
+        title: const Text(
+          'Expense Dashboard',
+          style: TextStyle(fontSize: 16),
+        ),
         centerTitle: true,
+        toolbarHeight: 26,
+        titleSpacing: 0,
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 4),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(11),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -30,28 +36,28 @@ class DashboardPage extends StatelessWidget {
               style: Theme.of(context).textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 17),
             
             // Total spent card
             Card(
               color: Theme.of(context).colorScheme.primaryContainer,
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(17),
                 child: Column(
                   children: [
                     Icon(
                       Icons.account_balance_wallet,
-                      size: 48,
+                      size: 34,
                       color: Theme.of(context).colorScheme.onPrimaryContainer,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 11),
                     Text(
                       'Total Spent',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       '\$${totalSpent.toStringAsFixed(2)}',
                       style: Theme.of(context).textTheme.displayMedium?.copyWith(
@@ -63,32 +69,32 @@ class DashboardPage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 17),
             
             // Category breakdown
             Text(
               'Spending by Category',
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 11),
             
             if (categoryTotals.isEmpty)
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(32),
+                  padding: const EdgeInsets.all(22),
                   child: Column(
                     children: [
                       Icon(
                         Icons.pie_chart_outline,
-                        size: 64,
+                        size: 45,
                         color: Theme.of(context).colorScheme.outline,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 11),
                       Text(
                         'No expenses yet',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         'Complete shopping trips with priced items to see your spending breakdown',
                         textAlign: TextAlign.center,
@@ -109,9 +115,9 @@ class DashboardPage extends StatelessWidget {
                     : 0.0;
                 
                 return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
+                  margin: const EdgeInsets.only(bottom: 8),
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(11),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -124,7 +130,7 @@ class DashboardPage extends StatelessWidget {
                                   _getCategoryIcon(category),
                                   color: Theme.of(context).colorScheme.primary,
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 8),
                                 Text(
                                   category,
                                   style: Theme.of(context).textTheme.titleMedium,
@@ -139,13 +145,13 @@ class DashboardPage extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         LinearProgressIndicator(
                           value: percentage / 100,
-                          minHeight: 8,
+                          minHeight: 6,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text(
                           '${percentage.toStringAsFixed(1)}% of total',
                           style: Theme.of(context).textTheme.bodySmall,
@@ -156,20 +162,20 @@ class DashboardPage extends StatelessWidget {
                 );
               }).toList(),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 11),
             
             // Info card
             Card(
               color: Theme.of(context).colorScheme.secondaryContainer,
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(11),
                 child: Row(
                   children: [
                     Icon(
                       Icons.info_outline,
                       color: Theme.of(context).colorScheme.onSecondaryContainer,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Add prices to items and complete shopping trips to track your expenses',

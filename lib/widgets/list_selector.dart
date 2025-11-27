@@ -12,9 +12,10 @@ class ListSelector extends StatelessWidget {
     final selectedList = provider.selectedList;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      elevation: 1,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         child: Row(
           children: [
             const Icon(Icons.list_alt, size: 18),
@@ -24,6 +25,7 @@ class ListSelector extends StatelessWidget {
                 child: DropdownButton<String>(
                   value: selectedList?.id,
                   isExpanded: true,
+                  isDense: true,
                   items: lists.map((list) {
                     return DropdownMenuItem(
                       value: list.id,

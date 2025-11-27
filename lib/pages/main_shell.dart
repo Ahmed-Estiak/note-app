@@ -23,7 +23,7 @@ class _MainShellState extends State<MainShell> {
       body: _pages[_currentIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
-        height: 48,
+        height: 42,
         onDestinationSelected: (index) {
           setState(() {
             _currentIndex = index;
@@ -31,13 +31,13 @@ class _MainShellState extends State<MainShell> {
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.shopping_cart_outlined, size: 18),
-            selectedIcon: Icon(Icons.shopping_cart, size: 18),
+            icon: Icon(Icons.shopping_cart_outlined, size: 16),
+            selectedIcon: Icon(Icons.shopping_cart, size: 16),
             label: 'Lists',
           ),
           NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined, size: 18),
-            selectedIcon: Icon(Icons.dashboard, size: 18),
+            icon: Icon(Icons.dashboard_outlined, size: 16),
+            selectedIcon: Icon(Icons.dashboard, size: 16),
             label: 'Dashboard',
           ),
         ],
