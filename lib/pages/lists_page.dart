@@ -523,10 +523,23 @@ class _ListsPageState extends State<ListsPage> {
             // Parse the item name for quantity and price
             final parsed = ItemParser.parse(itemName);
             
-            // Try to find existing itemId for this item (to preserve history)
-            // Use the parsed name for lookup
-            final existingItemId = provider.getItemIdForSuggestion(parsed.name);
+            // Get itemId for ORIGINAL name (before renaming) to preserve history
+            final normalizedOriginal = itemName.toLowerCase().trim();
+            final existingItemId = provider.getItemIdForSuggestion(normalizedOriginal);
             
+            // If item has symbols (different from parsed name), clean up purchase history
+            final normalizedParsed = parsed.name.toLowerCase().trim();
+            
+            if (normalizedOriginal != normalizedParsed) {
+              // Update purchase history: "beef #4" → "beef" globally
+              await provider.updatePurchaseHistoryByName(
+                normalizedOriginal,
+                normalizedParsed,
+                listId: selectedList.id,
+              );
+            }
+            
+            // Create item with the itemId we got from the original name
             final newItem = GroceryItem(
               id: existingItemId ?? const Uuid().v4(),
               name: parsed.name,
