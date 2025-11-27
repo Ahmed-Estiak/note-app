@@ -241,7 +241,7 @@ class _ListsPageState extends State<ListsPage> {
 
           // Action buttons
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               boxShadow: [
@@ -257,10 +257,11 @@ class _ListsPageState extends State<ListsPage> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _showMagicListSheet(context, provider),
-                    icon: const Icon(Icons.auto_fix_high, size: 18),
-                    label: const Text('Magic List', style: TextStyle(fontSize: 13)),
+                    icon: const Icon(Icons.auto_fix_high, size: 16),
+                    label: const Text('Magic List', style: TextStyle(fontSize: 12)),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      minimumSize: const Size(0, 32),
                     ),
                   ),
                 ),
@@ -270,10 +271,11 @@ class _ListsPageState extends State<ListsPage> {
                     onPressed: selectedList.items.any((item) => item.done)
                         ? () => _completeTrip(context, provider)
                         : null,
-                    icon: const Icon(Icons.check_circle_outline, size: 18),
-                    label: const Text('Complete Trip', style: TextStyle(fontSize: 13)),
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
+                    label: const Text('Complete Trip', style: TextStyle(fontSize: 12)),
                     style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      minimumSize: const Size(0, 32),
                     ),
                   ),
                 ),
@@ -323,7 +325,7 @@ class _ListsPageState extends State<ListsPage> {
             labelStyle: TextStyle(
               color: Theme.of(context).colorScheme.onSecondaryContainer,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           );
         }).toList(),
