@@ -164,8 +164,8 @@ class _MagicListSheetState extends State<MagicListSheet> {
 
     return Container(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 12,
-        top: 12,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 8,
+        top: 8,
         left: 12,
         right: 12,
       ),
@@ -188,7 +188,7 @@ class _MagicListSheetState extends State<MagicListSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           // Dynamic editable boxes (only show available suggestions)
           ...List.generate(_controllers.length, (index) {
@@ -197,9 +197,9 @@ class _MagicListSheetState extends State<MagicListSheet> {
             }
             
             return Card(
-              margin: const EdgeInsets.only(bottom: 6),
+              margin: const EdgeInsets.only(bottom: 4),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
                 child: Row(
                   children: [
                     Expanded(
@@ -234,7 +234,7 @@ class _MagicListSheetState extends State<MagicListSheet> {
             );
           }),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           // Add All button
           FilledButton.icon(
@@ -242,22 +242,22 @@ class _MagicListSheetState extends State<MagicListSheet> {
             icon: const Icon(Icons.add_circle, size: 18),
             label: const Text('Add All', style: TextStyle(fontSize: 13)),
             style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: 6),
             ),
           ),
 
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
 
           // Close button
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: 6),
             ),
             child: const Text('Close', style: TextStyle(fontSize: 13)),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
         ],
       ),
     );

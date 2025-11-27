@@ -12,9 +12,9 @@ class ListSelector extends StatelessWidget {
     final selectedList = provider.selectedList;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
         child: Row(
           children: [
             const Icon(Icons.list_alt, size: 18),

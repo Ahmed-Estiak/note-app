@@ -241,7 +241,7 @@ class _ListsPageState extends State<ListsPage> {
 
           // Action buttons
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               boxShadow: [
@@ -260,7 +260,7 @@ class _ListsPageState extends State<ListsPage> {
                     icon: const Icon(Icons.auto_fix_high, size: 18),
                     label: const Text('Magic List', style: TextStyle(fontSize: 13)),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
                     ),
                   ),
                 ),
@@ -273,7 +273,7 @@ class _ListsPageState extends State<ListsPage> {
                     icon: const Icon(Icons.check_circle_outline, size: 18),
                     label: const Text('Complete Trip', style: TextStyle(fontSize: 13)),
                     style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
                     ),
                   ),
                 ),
