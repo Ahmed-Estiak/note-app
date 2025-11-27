@@ -12,13 +12,13 @@ class ListSelector extends StatelessWidget {
     final selectedList = provider.selectedList;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: Row(
           children: [
-            const Icon(Icons.list_alt),
-            const SizedBox(width: 12),
+            const Icon(Icons.list_alt, size: 18),
+            const SizedBox(width: 8),
             Expanded(
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
@@ -30,7 +30,7 @@ class ListSelector extends StatelessWidget {
                       child: Text(
                         list.name,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -45,19 +45,25 @@ class ListSelector extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.edit_outlined),
+              icon: const Icon(Icons.edit_outlined, size: 18),
               tooltip: 'Rename list',
+              padding: const EdgeInsets.all(6),
+              constraints: const BoxConstraints(),
               onPressed: () => _showRenameListDialog(context, provider),
             ),
             IconButton(
-              icon: const Icon(Icons.add),
+              icon: const Icon(Icons.add, size: 18),
               tooltip: 'Create new list',
+              padding: const EdgeInsets.all(6),
+              constraints: const BoxConstraints(),
               onPressed: () => _showCreateListDialog(context, provider),
             ),
             if (lists.length > 1)
               IconButton(
-                icon: const Icon(Icons.delete_outline),
+                icon: const Icon(Icons.delete_outline, size: 18),
                 tooltip: 'Delete list',
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(),
                 onPressed: () => _showDeleteListDialog(context, provider),
               ),
           ],

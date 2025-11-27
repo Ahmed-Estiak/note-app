@@ -119,15 +119,20 @@ class _BulletItemState extends State<BulletItem> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 6),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         child: Row(
           children: [
             // Checkbox
-            Checkbox(
-              value: widget.item.done,
-              onChanged: (_) => widget.onToggleDone(),
+            SizedBox(
+              width: 32,
+              height: 32,
+              child: Checkbox(
+                value: widget.item.done,
+                onChanged: (_) => widget.onToggleDone(),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
             ),
             
             // Text field
@@ -142,9 +147,10 @@ class _BulletItemState extends State<BulletItem> {
                     decoration: const InputDecoration(
                       border: InputBorder.none,
                       isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 8),
+                      contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                     ),
                     style: TextStyle(
+                      fontSize: 14,
                       decoration: widget.item.done ? TextDecoration.lineThrough : null,
                       color: widget.item.done
                           ? Theme.of(context).colorScheme.outline
@@ -191,10 +197,11 @@ class _BulletItemState extends State<BulletItem> {
                   // Item details (price, category, expiry)
                   if (!_isEditing && _hasDetails())
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
+                      padding: const EdgeInsets.only(left: 4, top: 2),
                       child: Text(
                         _getDetailsText(),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontSize: 11,
                               color: widget.item.isExpiringSoon
                                   ? Colors.orange.shade700
                                   : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -211,14 +218,18 @@ class _BulletItemState extends State<BulletItem> {
             // Edit and Delete buttons (hidden when editing)
             if (!_isEditing) ...[
               IconButton(
-                icon: const Icon(Icons.edit_outlined, size: 20),
+                icon: const Icon(Icons.edit_outlined, size: 16),
                 onPressed: widget.onEditDetails,
                 tooltip: 'Edit details',
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
               ),
               IconButton(
-                icon: const Icon(Icons.delete_outline, size: 20),
+                icon: const Icon(Icons.delete_outline, size: 16),
                 onPressed: widget.onDelete,
                 tooltip: 'Delete',
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
               ),
             ],
           ],

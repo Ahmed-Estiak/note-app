@@ -116,12 +116,18 @@ class _ListsPageState extends State<ListsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Autonotic'),
+        title: const Text(
+          'Autonotic',
+          style: TextStyle(fontSize: 18),
+        ),
         centerTitle: true,
+        toolbarHeight: 48,
         actions: [
           IconButton(
-            icon: const Icon(Icons.history),
+            icon: const Icon(Icons.history, size: 20),
             tooltip: 'Trip History',
+            padding: const EdgeInsets.all(8),
+            constraints: const BoxConstraints(),
             onPressed: () {
               Navigator.push(
                 context,
@@ -130,8 +136,10 @@ class _ListsPageState extends State<ListsPage> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.help_outline),
+            icon: const Icon(Icons.help_outline, size: 20),
             tooltip: 'How to use # and *',
+            padding: const EdgeInsets.all(8),
+            constraints: const BoxConstraints(),
             onPressed: () => InstructionsDialog.show(context),
           ),
         ],
@@ -233,7 +241,7 @@ class _ListsPageState extends State<ListsPage> {
 
           // Action buttons
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               boxShadow: [
@@ -249,18 +257,24 @@ class _ListsPageState extends State<ListsPage> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _showMagicListSheet(context, provider),
-                    icon: const Icon(Icons.auto_fix_high),
-                    label: const Text('Magic List'),
+                    icon: const Icon(Icons.auto_fix_high, size: 18),
+                    label: const Text('Magic List', style: TextStyle(fontSize: 13)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: selectedList.items.any((item) => item.done)
                         ? () => _completeTrip(context, provider)
                         : null,
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: const Text('Complete Trip'),
+                    icon: const Icon(Icons.check_circle_outline, size: 18),
+                    label: const Text('Complete Trip', style: TextStyle(fontSize: 13)),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
                   ),
                 ),
               ],
@@ -290,22 +304,27 @@ class _ListsPageState extends State<ListsPage> {
     }
     
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
+        spacing: 6,
+        runSpacing: 6,
         children: filteredSuggestions.map((suggestion) {
           // Use edited name if available, otherwise capitalize original
           final editedName = _editedMagicListNames[suggestion];
           final displayName = editedName ?? (suggestion[0].toUpperCase() + suggestion.substring(1));
           
           return ActionChip(
-            label: Text(displayName),
+            label: Text(
+              displayName,
+              style: const TextStyle(fontSize: 12),
+            ),
             onPressed: () => _addQuickSuggestion(context, provider, displayName),
             backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
             labelStyle: TextStyle(
               color: Theme.of(context).colorScheme.onSecondaryContainer,
             ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           );
         }).toList(),
       ),

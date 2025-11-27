@@ -164,10 +164,10 @@ class _MagicListSheetState extends State<MagicListSheet> {
 
     return Container(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-        top: 16,
-        left: 16,
-        right: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 12,
+        top: 12,
+        left: 12,
+        right: 12,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -178,16 +178,17 @@ class _MagicListSheetState extends State<MagicListSheet> {
             children: [
               Icon(
                 Icons.auto_fix_high,
+                size: 20,
                 color: Theme.of(context).colorScheme.primary,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Text(
                 'Magic List',
-                style: Theme.of(context).textTheme.titleLarge,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 16),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Dynamic editable boxes (only show available suggestions)
           ...List.generate(_controllers.length, (index) {
@@ -196,9 +197,9 @@ class _MagicListSheetState extends State<MagicListSheet> {
             }
             
             return Card(
-              margin: const EdgeInsets.only(bottom: 8),
+              margin: const EdgeInsets.only(bottom: 6),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 child: Row(
                   children: [
                     Expanded(
@@ -209,8 +210,9 @@ class _MagicListSheetState extends State<MagicListSheet> {
                           hintText: 'Item ${index + 1}',
                           border: InputBorder.none,
                           isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                         ),
-                        style: const TextStyle(fontSize: 16),
+                        style: const TextStyle(fontSize: 14),
                         enableInteractiveSelection: true,
                         textCapitalization: TextCapitalization.sentences,
                         onSubmitted: (value) {
@@ -220,9 +222,11 @@ class _MagicListSheetState extends State<MagicListSheet> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.delete_outline, size: 20),
+                      icon: const Icon(Icons.delete_outline, size: 16),
                       onPressed: () => _deleteItem(index),
                       tooltip: 'Delete',
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
@@ -230,27 +234,30 @@ class _MagicListSheetState extends State<MagicListSheet> {
             );
           }),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Add All button
           FilledButton.icon(
             onPressed: _addAllItems,
-            icon: const Icon(Icons.add_circle),
-            label: const Text('Add All'),
+            icon: const Icon(Icons.add_circle, size: 18),
+            label: const Text('Add All', style: TextStyle(fontSize: 13)),
             style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(vertical: 10),
             ),
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
           // Close button
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+            ),
+            child: const Text('Close', style: TextStyle(fontSize: 13)),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
         ],
       ),
     );
