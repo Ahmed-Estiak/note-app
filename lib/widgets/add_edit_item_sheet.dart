@@ -72,16 +72,18 @@ class _AddEditItemSheetState extends State<AddEditItemSheet> {
       return;
     }
     
-    // Valid: update all fields
+    // Valid: update fields based on symbol presence
     setState(() {
       _nameController.text = parsed.name;
       
-      if (parsed.quantity != null) {
-        _quantityController.text = parsed.quantity!;
+      // Only update quantity if # symbol was present
+      if (parsed.hasQuantitySymbol) {
+        _quantityController.text = parsed.quantity ?? '';
       }
       
-      if (parsed.price != null) {
-        _priceController.text = parsed.price!.toStringAsFixed(2);
+      // Only update price if * symbol was present
+      if (parsed.hasPriceSymbol) {
+        _priceController.text = parsed.price?.toStringAsFixed(2) ?? '';
       }
     });
   }

@@ -157,10 +157,13 @@ class _ListsPageState extends State<ListsPage> {
                       if (parsed.isValid) {
                         final updatedItem = item.copyWith(
                           name: parsed.name,
-                          quantity: parsed.quantity,
-                          price: parsed.price,
-                          clearQuantity: parsed.quantity == null,
-                          clearPrice: parsed.price == null,
+                          // Only update quantity if # symbol was present
+                          quantity: parsed.hasQuantitySymbol ? parsed.quantity : item.quantity,
+                          // Only update price if * symbol was present
+                          price: parsed.hasPriceSymbol ? parsed.price : item.price,
+                          // Only clear if symbol was present but value is null
+                          clearQuantity: parsed.hasQuantitySymbol && parsed.quantity == null,
+                          clearPrice: parsed.hasPriceSymbol && parsed.price == null,
                         );
                         provider.updateItem(item.id, updatedItem);
                       }

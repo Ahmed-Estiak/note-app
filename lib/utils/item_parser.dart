@@ -3,19 +3,25 @@ class ParsedItem {
   final String? quantity;
   final double? price;
   final bool isValid;
+  final bool hasQuantitySymbol;
+  final bool hasPriceSymbol;
 
   ParsedItem({
     required this.name,
     this.quantity,
     this.price,
     required this.isValid,
+    this.hasQuantitySymbol = false,
+    this.hasPriceSymbol = false,
   });
 
   ParsedItem.invalid()
       : name = '',
         quantity = null,
         price = null,
-        isValid = false;
+        isValid = false,
+        hasQuantitySymbol = false,
+        hasPriceSymbol = false;
 }
 
 class ItemParser {
@@ -44,6 +50,8 @@ class ItemParser {
       return ParsedItem(
         name: trimmed,
         isValid: true,
+        hasQuantitySymbol: false,
+        hasPriceSymbol: false,
       );
     }
 
@@ -93,6 +101,8 @@ class ItemParser {
       quantity: quantity,
       price: price,
       isValid: true,
+      hasQuantitySymbol: hashIndex != -1,
+      hasPriceSymbol: asteriskIndex != -1,
     );
   }
 
