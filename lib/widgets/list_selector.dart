@@ -12,13 +12,13 @@ class ListSelector extends StatelessWidget {
     final selectedList = provider.selectedList;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
         child: Row(
           children: [
             const Icon(Icons.list_alt, size: 18),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Expanded(
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
@@ -45,24 +45,24 @@ class ListSelector extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.edit_outlined, size: 18),
+              icon: const Icon(Icons.edit_outlined, size: 16),
               tooltip: 'Rename list',
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(4),
               constraints: const BoxConstraints(),
               onPressed: () => _showRenameListDialog(context, provider),
             ),
             IconButton(
-              icon: const Icon(Icons.add, size: 18),
+              icon: const Icon(Icons.add, size: 16),
               tooltip: 'Create new list',
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(4),
               constraints: const BoxConstraints(),
               onPressed: () => _showCreateListDialog(context, provider),
             ),
             if (lists.length > 1)
               IconButton(
-                icon: const Icon(Icons.delete_outline, size: 18),
+                icon: const Icon(Icons.delete_outline, size: 16),
                 tooltip: 'Delete list',
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(4),
                 constraints: const BoxConstraints(),
                 onPressed: () => _showDeleteListDialog(context, provider),
               ),

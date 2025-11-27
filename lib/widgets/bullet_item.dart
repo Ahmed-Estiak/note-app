@@ -126,12 +126,13 @@ class _BulletItemState extends State<BulletItem> {
           children: [
             // Checkbox
             SizedBox(
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               child: Checkbox(
                 value: widget.item.done,
                 onChanged: (_) => widget.onToggleDone(),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
               ),
             ),
             
