@@ -12,6 +12,7 @@ import '../widgets/magic_list_sheet.dart';
 import '../widgets/expiring_banner.dart';
 import '../widgets/instructions_dialog.dart';
 import '../pages/trip_history_page.dart';
+import '../pages/expiring_soon_page.dart';
 import '../utils/item_parser.dart';
 
 class ListsPage extends StatefulWidget {
@@ -153,7 +154,19 @@ class _ListsPageState extends State<ListsPage> {
           
           // Expiring banner
           if (expiringItems.isNotEmpty)
-            ExpiringBanner(expiringItems: expiringItems),
+            ExpiringBanner(
+              expiringItems: expiringItems,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ExpiringSoonPage(
+                      expiringItems: expiringItems,
+                    ),
+                  ),
+                );
+              },
+            ),
 
           // Items list
           Expanded(
