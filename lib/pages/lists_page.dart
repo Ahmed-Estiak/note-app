@@ -153,7 +153,7 @@ class _ListsPageState extends State<ListsPage> {
           const ListSelector(),
           
           // Expiring banner
-          if (expiringItems.isNotEmpty)
+          if (expiringItems.isNotEmpty) ...[
             ExpiringBanner(
               expiringItems: expiringItems,
               onTap: () {
@@ -167,6 +167,8 @@ class _ListsPageState extends State<ListsPage> {
                 );
               },
             ),
+            const SizedBox(height: 4),
+          ],
 
           // Items list
           Expanded(
@@ -421,12 +423,36 @@ class _ListsPageState extends State<ListsPage> {
       final lastItem = selectedList.items.last;
       if (lastItem.name.trim().isEmpty) {
         // Already have an empty bullet, don't add another
+        // But ensure it has focus to keep keyboard open
+        final itemId = lastItem.id;
+        final focusNode = _getFocusNode(itemId);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            focusNode.requestFocus();
+          }
+        });
         return;
       }
     }
     
     // Add new empty bullet
     await _addNewItem(provider, selectedList.items.length);
+    
+    // Immediately request focus on the new empty bullet to keep keyboard open
+    // Use multiple postFrameCallbacks to ensure UI is fully updated
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _focusLastEmptyBullet(provider);
+        // Scroll to ensure the new bullet is visible
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 100),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    });
   }
 
   Future<void> _showEditItemSheet(BuildContext context, GroceryProvider provider, GroceryItem item) async {
