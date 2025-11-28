@@ -72,7 +72,26 @@ class _ListsPageState extends State<ListsPage> {
   }
 
   FocusNode _getFocusNode(String itemId) {
-    return _focusNodes.putIfAbsent(itemId, () => FocusNode());
+    return _focusNodes.putIfAbsent(itemId, () {
+      final focusNode = FocusNode();
+      // Add listener to scroll to bottom when item receives focus (keyboard appears)
+      // This ensures the focused item is visible above the keyboard
+      focusNode.addListener(() {
+        if (focusNode.hasFocus && _scrollController.hasClients) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _scrollController.hasClients) {
+              // Scroll to bottom to ensure focused item is visible
+              _scrollController.animateTo(
+                _scrollController.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 100),
+                curve: Curves.easeOut,
+              );
+            }
+          });
+        }
+      });
+      return focusNode;
+    });
   }
 
   void _focusLastEmptyBullet(GroceryProvider provider) {
@@ -173,10 +192,34 @@ class _ListsPageState extends State<ListsPage> {
 
           // Items list
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: selectedList.items.length,
+            child: Builder(
+              builder: (context) {
+                // Calculate bottom padding to account for keyboard and bottom UI elements
+                final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+                
+                // Check if quick suggestions are visible
+                final suggestions = provider.predictedItemNames(limit: 8);
+                final existingItemNames = selectedList.items
+                    .map((item) => item.name.toLowerCase().trim())
+                    .toSet();
+                final filteredSuggestions = suggestions
+                    .where((suggestion) => !existingItemNames.contains(suggestion))
+                    .toList();
+                final quickSuggestionsVisible = filteredSuggestions.isNotEmpty;
+                
+                // Estimate heights: quick suggestions ~60px (can wrap), action buttons ~36px
+                final bottomPadding = keyboardHeight + 
+                    (quickSuggestionsVisible ? 60.0 : 0.0) + 
+                    36.0; // Action buttons height
+                
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    bottom: bottomPadding,
+                  ),
+                  itemCount: selectedList.items.length,
               itemBuilder: (context, index) {
                 final item = selectedList.items[index];
                 final isLastItem = index == selectedList.items.length - 1;
@@ -251,6 +294,7 @@ class _ListsPageState extends State<ListsPage> {
                   },
                 );
               },
+            ),
             ),
           ),
 
