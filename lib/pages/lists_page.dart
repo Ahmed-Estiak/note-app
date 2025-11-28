@@ -116,6 +116,7 @@ class _ListsPageState extends State<ListsPage> {
     final expiringItems = provider.getExpiringSoonItems();
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: const Text(
           'Autonotic',
@@ -438,20 +439,12 @@ class _ListsPageState extends State<ListsPage> {
     // Add new empty bullet
     await _addNewItem(provider, selectedList.items.length);
     
-    // Immediately request focus on the new empty bullet to keep keyboard open
-    // Use multiple postFrameCallbacks to ensure UI is fully updated
+    // Request focus on the new empty bullet with a single callback
+    // Keep it simple to avoid viewport resizing issues on iOS
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
         _focusLastEmptyBullet(provider);
-        // Scroll to ensure the new bullet is visible
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 100),
-            curve: Curves.easeOut,
-          );
-        }
-      });
+      }
     });
   }
 
