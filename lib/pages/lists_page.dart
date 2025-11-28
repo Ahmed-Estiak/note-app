@@ -85,10 +85,15 @@ class _ListsPageState extends State<ListsPage> {
         final itemId = selectedList.items[i].id;
         final focusNode = _getFocusNode(itemId);
         
-        // Request focus after a short delay to ensure UI is updated
+        // Request focus after a delay to batch viewport recalculations on iOS
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            focusNode.requestFocus();
+            // Add delay to batch viewport recalculations
+            Future.delayed(const Duration(milliseconds: 50), () {
+              if (mounted) {
+                focusNode.requestFocus();
+              }
+            });
           }
         });
         break;

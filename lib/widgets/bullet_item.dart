@@ -87,11 +87,16 @@ class _BulletItemState extends State<BulletItem> {
       }
     });
 
-    // Auto-focus if requested
+    // Auto-focus if requested (with delay to batch viewport recalculations)
     if (widget.autoFocus) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _focusNode.requestFocus();
+          // Add delay to batch viewport recalculations on iOS
+          Future.delayed(const Duration(milliseconds: 50), () {
+            if (mounted) {
+              _focusNode.requestFocus();
+            }
+          });
         }
       });
     }
