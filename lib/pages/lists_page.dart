@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:html' as html show window;
 import '../providers/grocery_provider.dart';
 import '../models/grocery_item.dart';
 import '../models/grocery_list.dart';
@@ -75,6 +77,18 @@ class _ListsPageState extends State<ListsPage> {
     return _focusNodes.putIfAbsent(itemId, () => FocusNode());
   }
 
+  bool _isIOS() {
+    if (!kIsWeb) return false;
+    try {
+      final userAgent = html.window.navigator.userAgent.toLowerCase();
+      return userAgent.contains('iphone') || 
+             userAgent.contains('ipad') || 
+             userAgent.contains('ipod');
+    } catch (e) {
+      return false;
+    }
+  }
+
   void _focusLastEmptyBullet(GroceryProvider provider) {
     final selectedList = provider.selectedList;
     if (selectedList == null || selectedList.items.isEmpty) return;
@@ -85,8 +99,9 @@ class _ListsPageState extends State<ListsPage> {
         final itemId = selectedList.items[i].id;
         final focusNode = _getFocusNode(itemId);
         
-        // Request focus immediately to keep keyboard open
-        if (mounted) {
+        // On iOS: Don't request focus (let keyboard close)
+        // On Android: Request focus immediately to keep keyboard open
+        if (!_isIOS() && mounted) {
           focusNode.requestFocus();
         }
         break;
@@ -499,10 +514,11 @@ class _ListsPageState extends State<ListsPage> {
       final lastItem = selectedList.items.last;
       if (lastItem.name.trim().isEmpty) {
         // Already have an empty bullet, don't add another
-        // But ensure it has focus to keep keyboard open
-        final itemId = lastItem.id;
-        final focusNode = _getFocusNode(itemId);
-        if (mounted) {
+        // On iOS: Don't request focus (let keyboard close)
+        // On Android: Ensure it has focus to keep keyboard open
+        if (!_isIOS() && mounted) {
+          final itemId = lastItem.id;
+          final focusNode = _getFocusNode(itemId);
           focusNode.requestFocus();
         }
         return;
@@ -512,8 +528,9 @@ class _ListsPageState extends State<ListsPage> {
     // Add new empty bullet
     await _addNewItem(provider, selectedList.items.length);
     
-    // Request focus immediately on the new empty bullet to keep keyboard open
-    if (mounted) {
+    // On iOS: Don't request focus (keyboard closes, no cursor blinking)
+    // On Android: Request focus immediately to keep keyboard open
+    if (!_isIOS() && mounted) {
       _focusLastEmptyBullet(provider);
     }
   }
