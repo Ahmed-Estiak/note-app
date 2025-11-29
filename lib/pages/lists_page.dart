@@ -85,17 +85,10 @@ class _ListsPageState extends State<ListsPage> {
         final itemId = selectedList.items[i].id;
         final focusNode = _getFocusNode(itemId);
         
-        // Request focus after a delay to batch viewport recalculations on iOS
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            // Add delay to batch viewport recalculations
-            Future.delayed(const Duration(milliseconds: 50), () {
-              if (mounted) {
-                focusNode.requestFocus();
-              }
-            });
-          }
-        });
+        // Request focus immediately to keep keyboard open
+        if (mounted) {
+          focusNode.requestFocus();
+        }
         break;
       }
     }
@@ -179,67 +172,49 @@ class _ListsPageState extends State<ListsPage> {
                 const SizedBox(height: 4),
               ],
 
-              // Items list - Use explicit height to prevent iOS from using content height in viewport calculations
-              Builder(
-                builder: (context) {
-                  final mediaQuery = MediaQuery.of(context);
-                  final screenHeight = mediaQuery.size.height;
-                  final keyboardHeight = mediaQuery.viewInsets.bottom;
-                  final paddingTop = mediaQuery.padding.top;
-                  final paddingBottom = mediaQuery.padding.bottom;
-                  
-                  // Fixed heights
-                  const appBarHeight = 30.0;
-                  const listSelectorHeight = 36.0; // Approximate height of ListSelector
-                  const navigationBarHeight = 42.0; // From main_shell.dart
-                  
-                  // Calculate ExpiringBanner height if visible
-                  final expiringBannerHeight = expiringItems.isNotEmpty ? 48.0 : 0.0; // Banner + SizedBox gap
-                  
-                  // Check if quick suggestions are visible
-                  final suggestions = provider.predictedItemNames(limit: 8);
-                  final existingItemNames = selectedList.items
-                      .map((item) => item.name.toLowerCase().trim())
-                      .toSet();
-                  final filteredSuggestions = suggestions
-                      .where((suggestion) => !existingItemNames.contains(suggestion))
-                      .toList();
-                  final quickSuggestionsVisible = filteredSuggestions.isNotEmpty;
-                  
-                  // Calculate bottom UI height (quick suggestions + action buttons)
-                  final bottomUIHeight = (quickSuggestionsVisible ? 60.0 : 0.0) + 36.0;
-                  
-                  // Calculate available height for ListView
-                  // Screen height - AppBar - padding top - ListSelector - ExpiringBanner - bottom UI - NavigationBar - padding bottom - keyboard
-                  // When keyboard is open, we need to subtract it from available height
-                  final availableHeight = screenHeight 
-                      - paddingTop
-                      - appBarHeight
-                      - listSelectorHeight
-                      - expiringBannerHeight
-                      - bottomUIHeight
-                      - navigationBarHeight
-                      - paddingBottom
-                      - keyboardHeight; // Subtract keyboard height to get actual available space
-                  
-                  // Bottom padding = keyboard height (add to padding so content scrolls above keyboard)
-                  final bottomPadding = keyboardHeight;
-                  
-                  return SizedBox(
-                    height: availableHeight,
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      // Limit cache extent to prevent iOS from using total content height in viewport calculations
-                      cacheExtent: 250.0,
-                      // Prevent over-scrolling that can trigger viewport recalculations
-                      physics: const ClampingScrollPhysics(),
-                      padding: EdgeInsets.only(
-                        left: 16,
-                        right: 16,
-                        bottom: bottomPadding,
-                      ),
-                      itemCount: selectedList.items.length,
-                      itemBuilder: (context, index) {
+              // Items list
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Get actual available height from constraints (not from ListView content)
+                    // This prevents iOS Safari from using ListView's total content height in viewport calculations
+                    return Builder(
+                      builder: (context) {
+                        // Calculate bottom padding to account for keyboard and bottom UI elements
+                        // With resizeToAvoidBottomInset: false, we manually handle all insets
+                        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+                        
+                        // Check if quick suggestions are visible
+                        final suggestions = provider.predictedItemNames(limit: 8);
+                        final existingItemNames = selectedList.items
+                            .map((item) => item.name.toLowerCase().trim())
+                            .toSet();
+                        final filteredSuggestions = suggestions
+                            .where((suggestion) => !existingItemNames.contains(suggestion))
+                            .toList();
+                        final quickSuggestionsVisible = filteredSuggestions.isNotEmpty;
+                        
+                        // Calculate bottom UI height (quick suggestions + action buttons)
+                        final bottomUIHeight = (quickSuggestionsVisible ? 60.0 : 0.0) + 36.0;
+                        
+                        // Bottom padding = keyboard height + bottom UI height
+                        // NavigationBar spacing is handled by Positioned widget, so we don't add it here
+                        // This ensures content is scrollable above keyboard and bottom UI
+                        final bottomPadding = keyboardHeight + bottomUIHeight;
+                        
+                        return ListView.builder(
+                          controller: _scrollController,
+                          // Limit cache extent to prevent iOS from using total content height in viewport calculations
+                          cacheExtent: 250.0,
+                          // Prevent over-scrolling that can trigger viewport recalculations
+                          physics: const ClampingScrollPhysics(),
+                          padding: EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            bottom: bottomPadding,
+                          ),
+                          itemCount: selectedList.items.length,
+                          itemBuilder: (context, index) {
                             final item = selectedList.items[index];
                             final isLastItem = index == selectedList.items.length - 1;
                             
@@ -247,7 +222,7 @@ class _ListsPageState extends State<ListsPage> {
                               key: ValueKey(item.id),
                               item: item,
                               focusNode: _getFocusNode(item.id),
-                              autoFocus: isLastItem && item.name.isEmpty,
+                              autoFocus: isLastItem && item.name.isEmpty && MediaQuery.of(context).viewInsets.bottom > 0,
                               onTextChanged: (text) {
                                 if (text.trim().isNotEmpty) {
                                   // Parse the text for quantity and price
@@ -313,10 +288,12 @@ class _ListsPageState extends State<ListsPage> {
                               },
                             );
                           },
-                        ),
-                      );
-                    },
-                  ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
           
           // Invisible spacer to prevent content from going under positioned bottom UI
           // Use fixed height based on bottom UI only (not navigation bar, as Positioned handles that)
@@ -340,19 +317,13 @@ class _ListsPageState extends State<ListsPage> {
           ),
         ],
       ),
-          
-          // Bottom UI positioned absolutely above NavigationBar
-          // Use explicit bottom position to prevent iOS viewport miscalculations
-          Builder(
-            builder: (context) {
-              const navigationBarHeight = 42.0; // From main_shell.dart
-              final bottomPadding = MediaQuery.of(context).padding.bottom;
-              
-              return Positioned(
-                bottom: bottomPadding + navigationBarHeight, // Safe area + NavigationBar height
-                left: 0,
-                right: 0,
-                child: Column(
+      
+      // Bottom UI positioned absolutely above NavigationBar
+      Positioned(
+        bottom: 0.0, // Minimal gap - positioned directly above NavigationBar
+        left: 0,
+        right: 0,
+        child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Quick suggestions
@@ -403,9 +374,7 @@ class _ListsPageState extends State<ListsPage> {
                 ),
               ],
             ),
-          );
-        },
-      ),
+          ),
         ],
       ),
     );
@@ -533,11 +502,9 @@ class _ListsPageState extends State<ListsPage> {
         // But ensure it has focus to keep keyboard open
         final itemId = lastItem.id;
         final focusNode = _getFocusNode(itemId);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            focusNode.requestFocus();
-          }
-        });
+        if (mounted) {
+          focusNode.requestFocus();
+        }
         return;
       }
     }
@@ -545,13 +512,10 @@ class _ListsPageState extends State<ListsPage> {
     // Add new empty bullet
     await _addNewItem(provider, selectedList.items.length);
     
-    // Request focus on the new empty bullet with a single callback
-    // Keep it simple to avoid viewport resizing issues on iOS
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _focusLastEmptyBullet(provider);
-      }
-    });
+    // Request focus immediately on the new empty bullet to keep keyboard open
+    if (mounted) {
+      _focusLastEmptyBullet(provider);
+    }
   }
 
   Future<void> _showEditItemSheet(BuildContext context, GroceryProvider provider, GroceryItem item) async {
