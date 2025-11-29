@@ -272,6 +272,7 @@ class _ListsPageState extends State<ListsPage> {
                               key: ValueKey(item.id),
                               item: item,
                               focusNode: _getFocusNode(item.id),
+                              isLastItem: isLastItem,
                               autoFocus: isLastItem && item.name.isEmpty && MediaQuery.of(context).viewInsets.bottom > 0,
                               onTextChanged: (text) {
                                 if (text.trim().isNotEmpty) {

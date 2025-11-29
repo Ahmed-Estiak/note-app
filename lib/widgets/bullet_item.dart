@@ -15,6 +15,7 @@ class BulletItem extends StatefulWidget {
   final VoidCallback? onTextDeleted;
   final bool autoFocus;
   final FocusNode? focusNode;
+  final bool isLastItem;
 
   const BulletItem({
     super.key,
@@ -29,6 +30,7 @@ class BulletItem extends StatefulWidget {
     this.onTextDeleted,
     this.autoFocus = false,
     this.focusNode,
+    this.isLastItem = false,
   });
 
   @override
@@ -221,8 +223,8 @@ class _BulletItemState extends State<BulletItem> {
               ),
             ),
             
-            // Edit and Delete buttons (hidden when editing)
-            if (!_isEditing) ...[
+            // Edit and Delete buttons (hidden when editing or when last empty item is not focused)
+            if (!_isEditing && !(widget.isLastItem && widget.item.name.trim().isEmpty && !_focusNode.hasFocus)) ...[
               IconButton(
                 icon: const Icon(Icons.edit_outlined, size: 16),
                 onPressed: widget.onEditDetails,
