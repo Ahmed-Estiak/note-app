@@ -164,7 +164,7 @@ class _ListsPageState extends State<ListsPage> {
     final expiringItems = provider.getExpiringSoonItems();
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: _isIOS() ? false : true, // false for iOS, true for Android
       appBar: AppBar(
         title: const Text(
           'Autonotic',
@@ -196,231 +196,236 @@ class _ListsPageState extends State<ListsPage> {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          // Main scrollable content
-          Column(
-            children: [
-              // List selector
-              const ListSelector(),
-              
-              // Expiring banner
-              if (expiringItems.isNotEmpty) ...[
-                ExpiringBanner(
-                  expiringItems: expiringItems,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ExpiringSoonPage(
-                          expiringItems: expiringItems,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 4),
-              ],
+      body: _isIOS() 
+        ? _buildIOSLayout(context, provider, selectedList, expiringItems)
+        : _buildAndroidLayout(context, provider, selectedList, expiringItems),
+    );
+  }
 
-              // Items list
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    // Get actual available height from constraints (not from ListView content)
-                    // This prevents iOS Safari from using ListView's total content height in viewport calculations
-                    return Builder(
-                      builder: (context) {
-                        // Calculate bottom padding to account for keyboard and bottom UI elements
-                        // With resizeToAvoidBottomInset: false, we manually handle all insets
-                        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-                        
-                        // Check if quick suggestions are visible
-                        final suggestions = provider.predictedItemNames(limit: 8);
-                        final existingItemNames = selectedList.items
-                            .map((item) => item.name.toLowerCase().trim())
-                            .toSet();
-                        final filteredSuggestions = suggestions
-                            .where((suggestion) => !existingItemNames.contains(suggestion))
-                            .toList();
-                        final quickSuggestionsVisible = filteredSuggestions.isNotEmpty;
-                        
-                        // Calculate bottom UI height (quick suggestions + action buttons)
-                        final bottomUIHeight = (quickSuggestionsVisible ? 60.0 : 0.0) + 36.0;
-                        
-                        // Bottom padding = keyboard height + bottom UI height
-                        // NavigationBar spacing is handled by Positioned widget, so we don't add it here
-                        // This ensures content is scrollable above keyboard and bottom UI
-                        final bottomPadding = keyboardHeight + bottomUIHeight;
-                        
-                        return ListView.builder(
-                          controller: _scrollController,
-                          // Limit cache extent to prevent iOS from using total content height in viewport calculations
-                          cacheExtent: 250.0,
-                          // Prevent over-scrolling that can trigger viewport recalculations
-                          physics: const ClampingScrollPhysics(),
-                          padding: EdgeInsets.only(
-                            left: 16,
-                            right: 16,
-                            bottom: bottomPadding,
-                          ),
-                          itemCount: selectedList.items.length,
-                          itemBuilder: (context, index) {
-                            final item = selectedList.items[index];
-                            final isLastItem = index == selectedList.items.length - 1;
-                            
-                            return BulletItem(
-                              key: ValueKey(item.id),
-                              item: item,
-                              focusNode: _getFocusNode(item.id),
-                              isLastItem: isLastItem,
-                              autoFocus: isLastItem && item.name.isEmpty && MediaQuery.of(context).viewInsets.bottom > 0,
-                              onTextChanged: (text) {
+  // iOS layout (current - keep as is)
+  Widget _buildIOSLayout(BuildContext context, GroceryProvider provider, GroceryList selectedList, List<GroceryItem> expiringItems) {
+    return Stack(
+      children: [
+        // Main scrollable content
+        Column(
+          children: [
+            // List selector
+            const ListSelector(),
+            
+            // Expiring banner
+            if (expiringItems.isNotEmpty) ...[
+              ExpiringBanner(
+                expiringItems: expiringItems,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ExpiringSoonPage(
+                        expiringItems: expiringItems,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 4),
+            ],
+
+            // Items list
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Get actual available height from constraints (not from ListView content)
+                  // This prevents iOS Safari from using ListView's total content height in viewport calculations
+                  return Builder(
+                    builder: (context) {
+                      // Calculate bottom padding to account for keyboard and bottom UI elements
+                      // With resizeToAvoidBottomInset: false, we manually handle all insets
+                      final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+                      
+                      // Check if quick suggestions are visible
+                      final suggestions = provider.predictedItemNames(limit: 8);
+                      final existingItemNames = selectedList.items
+                          .map((item) => item.name.toLowerCase().trim())
+                          .toSet();
+                      final filteredSuggestions = suggestions
+                          .where((suggestion) => !existingItemNames.contains(suggestion))
+                          .toList();
+                      final quickSuggestionsVisible = filteredSuggestions.isNotEmpty;
+                      
+                      // Calculate bottom UI height (quick suggestions + action buttons)
+                      final bottomUIHeight = (quickSuggestionsVisible ? 60.0 : 0.0) + 36.0;
+                      
+                      // Bottom padding = keyboard height + bottom UI height
+                      // NavigationBar spacing is handled by Positioned widget, so we don't add it here
+                      // This ensures content is scrollable above keyboard and bottom UI
+                      final bottomPadding = keyboardHeight + bottomUIHeight;
+                      
+                      return ListView.builder(
+                        controller: _scrollController,
+                        // Limit cache extent to prevent iOS from using total content height in viewport calculations
+                        cacheExtent: 250.0,
+                        // Prevent over-scrolling that can trigger viewport recalculations
+                        physics: const ClampingScrollPhysics(),
+                        padding: EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: bottomPadding,
+                        ),
+                        itemCount: selectedList.items.length,
+                        itemBuilder: (context, index) {
+                          final item = selectedList.items[index];
+                          final isLastItem = index == selectedList.items.length - 1;
+                          
+                          return BulletItem(
+                            key: ValueKey(item.id),
+                            item: item,
+                            focusNode: _getFocusNode(item.id),
+                            isLastItem: isLastItem,
+                            autoFocus: isLastItem && item.name.isEmpty && MediaQuery.of(context).viewInsets.bottom > 0,
+                            onTextChanged: (text) {
+                              if (text.trim().isNotEmpty) {
+                                // Parse the text for quantity and price
+                                final parsed = ItemParser.parse(text);
+                                
+                                if (parsed.isValid) {
+                                  final updatedItem = item.copyWith(
+                                    name: parsed.name,
+                                    // Only update quantity if # symbol was present
+                                    quantity: parsed.hasQuantitySymbol ? parsed.quantity : item.quantity,
+                                    // Only update price if * symbol was present
+                                    price: parsed.hasPriceSymbol ? parsed.price : item.price,
+                                    // Only clear if symbol was present but value is null
+                                    clearQuantity: parsed.hasQuantitySymbol && parsed.quantity == null,
+                                    clearPrice: parsed.hasPriceSymbol && parsed.price == null,
+                                  );
+                                  provider.updateItem(item.id, updatedItem);
+                                }
+                              }
+                            },
+                            onEditDetails: () => _showEditItemSheet(context, provider, item),
+                            onDelete: () => _deleteItem(context, provider, item.id),
+                            onToggleDone: () => provider.toggleItemDone(item.id),
+                            onEmptySubmitted: () {
+                              // Empty bullet + Enter: jump to last empty bullet
+                              _focusLastEmptyBullet(provider);
+                            },
+                            onTextDeleted: () {
+                              // Not used anymore - no auto-delete on text removal
+                            },
+                            onSubmitted: (text) {
+                              // Parse to check validity
+                              final parsed = ItemParser.parse(text);
+                              
+                              if (!parsed.isValid) {
+                                // Invalid (e.g., "# 12pcs" with no name): keep empty and refocus
+                                return;
+                              }
+                              
+                              if (isLastItem) {
+                                // Last item: add new bullet if it has content
                                 if (text.trim().isNotEmpty) {
-                                  // Parse the text for quantity and price
-                                  final parsed = ItemParser.parse(text);
-                                  
-                                  if (parsed.isValid) {
-                                    final updatedItem = item.copyWith(
-                                      name: parsed.name,
-                                      // Only update quantity if # symbol was present
-                                      quantity: parsed.hasQuantitySymbol ? parsed.quantity : item.quantity,
-                                      // Only update price if * symbol was present
-                                      price: parsed.hasPriceSymbol ? parsed.price : item.price,
-                                      // Only clear if symbol was present but value is null
-                                      clearQuantity: parsed.hasQuantitySymbol && parsed.quantity == null,
-                                      clearPrice: parsed.hasPriceSymbol && parsed.price == null,
-                                    );
-                                    provider.updateItem(item.id, updatedItem);
-                                  }
-                                }
-                              },
-                              onEditDetails: () => _showEditItemSheet(context, provider, item),
-                              onDelete: () => _deleteItem(context, provider, item.id),
-                              onToggleDone: () => provider.toggleItemDone(item.id),
-                              onEmptySubmitted: () {
-                                // Empty bullet + Enter: jump to last empty bullet
-                                _focusLastEmptyBullet(provider);
-                              },
-                              onTextDeleted: () {
-                                // Not used anymore - no auto-delete on text removal
-                              },
-                              onSubmitted: (text) {
-                                // Parse to check validity
-                                final parsed = ItemParser.parse(text);
-                                
-                                if (!parsed.isValid) {
-                                  // Invalid (e.g., "# 12pcs" with no name): keep empty and refocus
-                                  return;
-                                }
-                                
-                                if (isLastItem) {
-                                  // Last item: add new bullet if it has content
-                                  if (text.trim().isNotEmpty) {
-                                    _addNewItemIfNeeded(provider);
-                                  }
-                                } else {
-                                  // Not last item: save and jump to last empty bullet
-                                  _focusLastEmptyBullet(provider);
-                                }
-                              },
-                              onFocusLost: (text) {
-                                // Parse to check validity
-                                final parsed = ItemParser.parse(text);
-                                
-                                if (!parsed.isValid) {
-                                  // Invalid: don't add new bullet
-                                  return;
-                                }
-                                
-                                // Also add new bullet when focus is lost on the last item with content
-                                if (isLastItem && text.trim().isNotEmpty) {
                                   _addNewItemIfNeeded(provider);
                                 }
-                              },
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
-                ),
+                              } else {
+                                // Not last item: save and jump to last empty bullet
+                                _focusLastEmptyBullet(provider);
+                              }
+                            },
+                            onFocusLost: (text) {
+                              // Parse to check validity
+                              final parsed = ItemParser.parse(text);
+                              
+                              if (!parsed.isValid) {
+                                // Invalid: don't add new bullet
+                                return;
+                              }
+                              
+                              // Also add new bullet when focus is lost on the last item with content
+                              if (isLastItem && text.trim().isNotEmpty) {
+                                _addNewItemIfNeeded(provider);
+                              }
+                            },
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
               ),
+            ),
+        
+        // Invisible spacer to prevent content from going under positioned bottom UI
+        // Use fixed height based on bottom UI only (not navigation bar, as Positioned handles that)
+        Builder(
+          builder: (context) {
+            final suggestions = provider.predictedItemNames(limit: 8);
+            final existingItemNames = selectedList.items
+                .map((item) => item.name.toLowerCase().trim())
+                .toSet();
+            final filteredSuggestions = suggestions
+                .where((suggestion) => !existingItemNames.contains(suggestion))
+                .toList();
+            final quickSuggestionsVisible = filteredSuggestions.isNotEmpty;
+            final bottomUIHeight = (quickSuggestionsVisible ? 60.0 : 0.0) + 36.0;
+            
+            // Only account for bottom UI height, not navigation bar (Positioned handles that)
+            return SizedBox(
+              height: bottomUIHeight,
+            );
+          },
+        ),
+      ],
+    ),
+    
+    // Bottom UI positioned absolutely above NavigationBar
+    Positioned(
+      bottom: 0.0, // Minimal gap - positioned directly above NavigationBar
+      left: 0,
+      right: 0,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Quick suggestions
+          _buildQuickSuggestions(context, provider, selectedList),
           
-          // Invisible spacer to prevent content from going under positioned bottom UI
-          // Use fixed height based on bottom UI only (not navigation bar, as Positioned handles that)
-          Builder(
-            builder: (context) {
-              final suggestions = provider.predictedItemNames(limit: 8);
-              final existingItemNames = selectedList.items
-                  .map((item) => item.name.toLowerCase().trim())
-                  .toSet();
-              final filteredSuggestions = suggestions
-                  .where((suggestion) => !existingItemNames.contains(suggestion))
-                  .toList();
-              final quickSuggestionsVisible = filteredSuggestions.isNotEmpty;
-              final bottomUIHeight = (quickSuggestionsVisible ? 60.0 : 0.0) + 36.0;
-              
-              // Only account for bottom UI height, not navigation bar (Positioned handles that)
-              return SizedBox(
-                height: bottomUIHeight,
-              );
-            },
-          ),
-        ],
-      ),
-      
-      // Bottom UI positioned absolutely above NavigationBar
-      Positioned(
-        bottom: 0.0, // Minimal gap - positioned directly above NavigationBar
-        left: 0,
-        right: 0,
-        child: Column(
-              mainAxisSize: MainAxisSize.min,
+          // Action buttons
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Row(
               children: [
-                // Quick suggestions
-                _buildQuickSuggestions(context, provider, selectedList),
-                
-                // Action buttons
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showMagicListSheet(context, provider),
+                    icon: const Icon(Icons.auto_fix_high, size: 16),
+                    label: const Text('Magic List', style: TextStyle(fontSize: 12)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      minimumSize: const Size(0, 32),
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _showMagicListSheet(context, provider),
-                          icon: const Icon(Icons.auto_fix_high, size: 16),
-                          label: const Text('Magic List', style: TextStyle(fontSize: 12)),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            minimumSize: const Size(0, 32),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: selectedList.items.any((item) => item.done)
-                              ? () => _completeTrip(context, provider)
-                              : null,
-                          icon: const Icon(Icons.check_circle_outline, size: 16),
-                          label: const Text('Complete Trip', style: TextStyle(fontSize: 12)),
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            minimumSize: const Size(0, 32),
-                          ),
-                        ),
-                      ),
-                    ],
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: selectedList.items.any((item) => item.done)
+                        ? () => _completeTrip(context, provider)
+                        : null,
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
+                    label: const Text('Complete Trip', style: TextStyle(fontSize: 12)),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      minimumSize: const Size(0, 32),
+                    ),
                   ),
                 ),
               ],
@@ -428,8 +433,160 @@ class _ListsPageState extends State<ListsPage> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  ],
+);
+}
+
+// Android layout (prev1 version - simpler)
+Widget _buildAndroidLayout(BuildContext context, GroceryProvider provider, GroceryList selectedList, List<GroceryItem> expiringItems) {
+  return Column(
+    children: [
+      // List selector
+      const ListSelector(),
+      
+      // Expiring banner
+      if (expiringItems.isNotEmpty) ...[
+        ExpiringBanner(
+          expiringItems: expiringItems,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ExpiringSoonPage(
+                  expiringItems: expiringItems,
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 4),
+      ],
+
+      // Items list
+      Expanded(
+        child: ListView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          itemCount: selectedList.items.length,
+          itemBuilder: (context, index) {
+            final item = selectedList.items[index];
+            final isLastItem = index == selectedList.items.length - 1;
+            
+            return BulletItem(
+              key: ValueKey(item.id),
+              item: item,
+              focusNode: _getFocusNode(item.id),
+              isLastItem: isLastItem,
+              autoFocus: isLastItem && item.name.isEmpty, // Simple autofocus for Android
+              onTextChanged: (text) {
+                if (text.trim().isNotEmpty) {
+                  // Parse the text for quantity and price
+                  final parsed = ItemParser.parse(text);
+                  
+                  if (parsed.isValid) {
+                    final updatedItem = item.copyWith(
+                      name: parsed.name,
+                      // Only update quantity if # symbol was present
+                      quantity: parsed.hasQuantitySymbol ? parsed.quantity : item.quantity,
+                      // Only update price if * symbol was present
+                      price: parsed.hasPriceSymbol ? parsed.price : item.price,
+                      // Only clear if symbol was present but value is null
+                      clearQuantity: parsed.hasQuantitySymbol && parsed.quantity == null,
+                      clearPrice: parsed.hasPriceSymbol && parsed.price == null,
+                    );
+                    provider.updateItem(item.id, updatedItem);
+                  }
+                }
+              },
+              onEditDetails: () => _showEditItemSheet(context, provider, item),
+              onDelete: () => _deleteItem(context, provider, item.id),
+              onToggleDone: () => provider.toggleItemDone(item.id),
+              onEmptySubmitted: () {
+                // Empty bullet + Enter: jump to last empty bullet
+                _focusLastEmptyBullet(provider);
+              },
+              onTextDeleted: () {
+                // Not used anymore - no auto-delete on text removal
+              },
+              onSubmitted: (text) {
+                // Parse to check validity
+                final parsed = ItemParser.parse(text);
+                
+                if (!parsed.isValid) {
+                  // Invalid (e.g., "# 12pcs" with no name): keep empty and refocus
+                  return;
+                }
+                
+                if (isLastItem) {
+                  // Last item: add new bullet if it has content
+                  if (text.trim().isNotEmpty) {
+                    _addNewItemIfNeeded(provider);
+                  }
+                } else {
+                  // Not last item: save and jump to last empty bullet
+                  _focusLastEmptyBullet(provider);
+                }
+              },
+              onFocusLost: (text) {
+                // Parse to check validity
+                final parsed = ItemParser.parse(text);
+                
+                if (!parsed.isValid) {
+                  // Invalid: don't add new bullet
+                  return;
+                }
+                
+                // Also add new bullet when focus is lost on the last item with content
+                if (isLastItem && text.trim().isNotEmpty) {
+                  _addNewItemIfNeeded(provider);
+                }
+              },
+            );
+          },
+        ),
+      ),
+      
+      // Quick suggestions and action buttons at bottom
+      _buildQuickSuggestions(context, provider, selectedList),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _showMagicListSheet(context, provider),
+                icon: const Icon(Icons.auto_fix_high, size: 16),
+                label: const Text('Magic List', style: TextStyle(fontSize: 12)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  minimumSize: const Size(0, 32),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: selectedList.items.any((item) => item.done)
+                    ? () => _completeTrip(context, provider)
+                    : null,
+                icon: const Icon(Icons.check_circle_outline, size: 16),
+                label: const Text('Complete Trip', style: TextStyle(fontSize: 12)),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  minimumSize: const Size(0, 32),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
 
   Widget _buildQuickSuggestions(BuildContext context, GroceryProvider provider, GroceryList selectedList) {
     // Get top 8 suggestions
