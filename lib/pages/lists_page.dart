@@ -109,6 +109,41 @@ class _ListsPageState extends State<ListsPage> {
     }
   }
 
+  void _scrollToLastEmptyBullet(GroceryProvider provider, {bool requestFocus = false}) {
+    final selectedList = provider.selectedList;
+    if (selectedList == null || selectedList.items.isEmpty) return;
+
+    // Find the last empty bullet
+    for (int i = selectedList.items.length - 1; i >= 0; i--) {
+      if (selectedList.items[i].name.trim().isEmpty) {
+        final itemId = selectedList.items[i].id;
+        
+        // Scroll to bottom to show the last empty bullet
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+        
+        // On Android: Also request focus (blinking cursor)
+        // On iOS: Just scroll, no focus
+        if (requestFocus && !_isIOS() && mounted) {
+          final focusNode = _getFocusNode(itemId);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              focusNode.requestFocus();
+            }
+          });
+        }
+        break;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<GroceryProvider>();
@@ -493,6 +528,11 @@ class _ListsPageState extends State<ListsPage> {
       await provider.addItem(newItem);
     }
     
+    // Scroll to last empty bullet point
+    // On iOS: Just scroll (no cursor blinking)
+    // On Android: Scroll and focus (cursor will blink)
+    _scrollToLastEmptyBullet(provider, requestFocus: true);
+    
     // Show overlay notification with parsed name
     _showOverlayNotification(context, parsed.name);
   }
@@ -713,6 +753,11 @@ class _ListsPageState extends State<ListsPage> {
             _deletedMagicListSuggestions.clear();
             _editedMagicListNames.clear();
           });
+
+          // Scroll to last empty bullet point
+          // On iOS: Just scroll (no cursor blinking)
+          // On Android: Scroll and focus (cursor will blink)
+          _scrollToLastEmptyBullet(provider, requestFocus: true);
 
           // Show notification
           if (context.mounted) {
