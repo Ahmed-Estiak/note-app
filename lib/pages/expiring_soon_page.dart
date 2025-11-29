@@ -29,6 +29,17 @@ class ExpiringSoonPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Sort items by expiry time (soonest first)
+    final sortedItems = List<GroceryItem>.from(expiringItems)
+      ..sort((a, b) {
+        // Handle null expiry dates - put them at the end
+        if (a.expiry == null && b.expiry == null) return 0;
+        if (a.expiry == null) return 1;
+        if (b.expiry == null) return -1;
+        // Sort by expiry date (ascending - soonest first)
+        return a.expiry!.compareTo(b.expiry!);
+      });
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -40,7 +51,7 @@ class ExpiringSoonPage extends StatelessWidget {
         titleSpacing: 0,
         actionsPadding: const EdgeInsets.symmetric(horizontal: 4),
       ),
-      body: expiringItems.isEmpty
+      body: sortedItems.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -64,11 +75,11 @@ class ExpiringSoonPage extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Card(
                 elevation: 2,
-                color: Colors.orange.shade50,
+                color: Colors.green.shade50,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color: Colors.orange.shade200,
+                    color: Colors.green.shade200,
                     width: 1.5,
                   ),
                 ),
@@ -82,14 +93,14 @@ class ExpiringSoonPage extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.warning_amber_rounded,
-                            color: Colors.orange.shade700,
+                            color: Colors.red.shade700,
                             size: 24,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Expiring Soon',
                             style: TextStyle(
-                              color: Colors.orange.shade900,
+                              color: Colors.red.shade700,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
@@ -102,7 +113,7 @@ class ExpiringSoonPage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              '${expiringItems.length} ${expiringItems.length == 1 ? 'item' : 'items'}',
+                              '${sortedItems.length} ${sortedItems.length == 1 ? 'item' : 'items'}',
                               style: TextStyle(
                                 color: Colors.orange.shade900,
                                 fontSize: 12,
@@ -115,15 +126,15 @@ class ExpiringSoonPage extends StatelessWidget {
                       const SizedBox(height: 16),
                       // Divider
                       Divider(
-                        color: Colors.orange.shade200,
+                        color: Colors.green.shade200,
                         thickness: 1,
                       ),
                       const SizedBox(height: 12),
                       // Items list
-                      ...expiringItems.asMap().entries.map((entry) {
+                      ...sortedItems.asMap().entries.map((entry) {
                         final index = entry.key;
                         final item = entry.value;
-                        final isLast = index == expiringItems.length - 1;
+                        final isLast = index == sortedItems.length - 1;
                         
                         return Padding(
                           padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
@@ -136,7 +147,7 @@ class ExpiringSoonPage extends StatelessWidget {
                                 child: Icon(
                                   Icons.circle,
                                   size: 6,
-                                  color: Colors.orange.shade700,
+                                  color: Colors.green.shade700,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -148,20 +159,19 @@ class ExpiringSoonPage extends StatelessWidget {
                                     Text(
                                       item.name,
                                       style: TextStyle(
-                                        color: Colors.orange.shade900,
-                                        fontWeight: FontWeight.w600,
+                                        color: Colors.green.shade800,
                                         fontSize: 15,
                                       ),
                                     ),
-                                    if (item.quantity != null || item.category != 'Other') ...[
+                                    if (item.quantity != null || (item.category != null && item.category != 'Other')) ...[
                                       const SizedBox(height: 4),
                                       Text(
                                         [
                                           if (item.quantity != null) 'Qty: ${item.quantity}',
-                                          if (item.category != 'Other') item.category,
+                                          if (item.category != null && item.category != 'Other') item.category!,
                                         ].join(' • '),
                                         style: TextStyle(
-                                          color: Colors.orange.shade700,
+                                          color: Colors.green.shade700,
                                           fontSize: 12,
                                         ),
                                       ),
@@ -173,7 +183,7 @@ class ExpiringSoonPage extends StatelessWidget {
                               Text(
                                 _getExpiryText(item),
                                 style: TextStyle(
-                                  color: Colors.orange.shade700,
+                                  color: Colors.green.shade700,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                 ),
