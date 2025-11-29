@@ -60,46 +60,132 @@ class ExpiringSoonPage extends StatelessWidget {
                 ],
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(11),
-              itemCount: expiringItems.length,
-              itemBuilder: (context, index) {
-                final item = expiringItems[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  color: Colors.orange.shade50,
-                  child: Padding(
-                    padding: const EdgeInsets.all(11),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.circle,
-                          size: 8,
-                          color: Colors.orange.shade700,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            item.name,
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Card(
+                elevation: 2,
+                color: Colors.orange.shade50,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: Colors.orange.shade200,
+                    width: 1.5,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.orange.shade700,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Expiring Soon',
                             style: TextStyle(
                               color: Colors.orange.shade900,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-                        Text(
-                          _getExpiryText(item),
-                          style: TextStyle(
-                            color: Colors.orange.shade700,
-                            fontSize: 12,
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade200,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${expiringItems.length} ${expiringItems.length == 1 ? 'item' : 'items'}',
+                              style: TextStyle(
+                                color: Colors.orange.shade900,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Divider
+                      Divider(
+                        color: Colors.orange.shade200,
+                        thickness: 1,
+                      ),
+                      const SizedBox(height: 12),
+                      // Items list
+                      ...expiringItems.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final item = entry.value;
+                        final isLast = index == expiringItems.length - 1;
+                        
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Bullet point
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Icon(
+                                  Icons.circle,
+                                  size: 6,
+                                  color: Colors.orange.shade700,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // Item name and details
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.name,
+                                      style: TextStyle(
+                                        color: Colors.orange.shade900,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                    if (item.quantity != null || item.category != 'Other') ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        [
+                                          if (item.quantity != null) 'Qty: ${item.quantity}',
+                                          if (item.category != 'Other') item.category,
+                                        ].join(' • '),
+                                        style: TextStyle(
+                                          color: Colors.orange.shade700,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              // Expiry text
+                              Text(
+                                _getExpiryText(item),
+                                style: TextStyle(
+                                  color: Colors.orange.shade700,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ],
                   ),
-                );
-              },
+                ),
+              ),
             ),
     );
   }

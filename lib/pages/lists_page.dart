@@ -168,17 +168,17 @@ class _ListsPageState extends State<ListsPage> {
       appBar: AppBar(
         title: const Text(
           'Autonotic',
-          style: TextStyle(fontSize: 16),
+          style: TextStyle(fontSize: 17),
         ),
         centerTitle: true,
-        toolbarHeight: 30,
-        titleSpacing: 0,
-        actionsPadding: const EdgeInsets.symmetric(horizontal: 4),
+        toolbarHeight: 35,
+        titleSpacing: 6,
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 8),
         actions: [
           IconButton(
-            icon: const Icon(Icons.history, size: 18),
+            icon: const Icon(Icons.history, size: 20),
             tooltip: 'Trip History',
-            padding: const EdgeInsets.all(2),
+            padding: const EdgeInsets.all(3),
             constraints: const BoxConstraints(),
             onPressed: () {
               Navigator.push(
@@ -188,9 +188,9 @@ class _ListsPageState extends State<ListsPage> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.help_outline, size: 18),
+            icon: const Icon(Icons.help_outline, size: 20),
             tooltip: 'How to use # and *',
-            padding: const EdgeInsets.all(2),
+            padding: const EdgeInsets.all(3),
             constraints: const BoxConstraints(),
             onPressed: () => InstructionsDialog.show(context),
           ),
