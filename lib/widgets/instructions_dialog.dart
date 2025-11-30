@@ -13,7 +13,7 @@ class InstructionsDialog extends StatelessWidget {
             color: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(width: 8),
-          const Text('Quick Add Tips'),
+          const Text('Quick Info And Tips'),
         ],
       ),
       content: SingleChildScrollView(
@@ -68,15 +68,6 @@ class InstructionsDialog extends StatelessWidget {
                 style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
               ),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Works in:',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-            ),
-            const SizedBox(height: 8),
-            _buildCheckItem('Main list bullet points'),
-            _buildCheckItem('Magic List'),
-            _buildCheckItem('Add/Edit item sheet'),
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(12),
