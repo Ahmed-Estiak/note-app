@@ -31,6 +31,7 @@ class _ListsPageState extends State<ListsPage> {
   String? _previousListId;
   final Set<String> _deletedMagicListSuggestions = {};
   final Map<String, String> _editedMagicListNames = {};
+  bool _wasVisible = true; // Track visibility for navigation scroll fix
 
   @override
   void initState() {
@@ -46,6 +47,25 @@ class _ListsPageState extends State<ListsPage> {
     if (!provider.hasSeenInstructions) {
       await InstructionsDialog.show(context);
       await provider.markInstructionsAsSeen();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_isIOS()) {
+      // Check if page just became visible
+      final isVisible = ModalRoute.of(context)?.isCurrent ?? false;
+      if (isVisible && !_wasVisible) {
+        // Just became visible - scroll to last empty bullet
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            final provider = context.read<GroceryProvider>();
+            _scrollToLastEmptyBullet(provider);
+          }
+        });
+      }
+      _wasVisible = isVisible;
     }
   }
 
@@ -253,7 +273,7 @@ class _ListsPageState extends State<ListsPage> {
                       final quickSuggestionsVisible = filteredSuggestions.isNotEmpty;
                       
                       // Calculate bottom UI height (quick suggestions + action buttons)
-                      final bottomUIHeight = (quickSuggestionsVisible ? 60.0 : 0.0) + 36.0;
+                      final bottomUIHeight = (quickSuggestionsVisible ? 48.0 : 0.0) + 36.0;
                       
                       // Bottom padding = keyboard height + bottom UI height
                       // NavigationBar spacing is handled by Positioned widget, so we don't add it here
@@ -366,7 +386,7 @@ class _ListsPageState extends State<ListsPage> {
                 .where((suggestion) => !existingItemNames.contains(suggestion))
                 .toList();
             final quickSuggestionsVisible = filteredSuggestions.isNotEmpty;
-            final bottomUIHeight = (quickSuggestionsVisible ? 60.0 : 0.0) + 36.0;
+            final bottomUIHeight = (quickSuggestionsVisible ? 48.0 : 0.0) + 36.0;
             
             // Only account for bottom UI height, not navigation bar (Positioned handles that)
             return SizedBox(
@@ -607,29 +627,34 @@ Widget _buildAndroidLayout(BuildContext context, GroceryProvider provider, Groce
     }
     
     return Container(
+      height: 48, // Fixed height for single row
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 6,
-        children: filteredSuggestions.map((suggestion) {
-          // Use edited name if available, otherwise capitalize original
-          final editedName = _editedMagicListNames[suggestion];
-          final displayName = editedName ?? (suggestion[0].toUpperCase() + suggestion.substring(1));
-          
-          return ActionChip(
-            label: Text(
-              displayName,
-              style: const TextStyle(fontSize: 12),
-            ),
-            onPressed: () => _addQuickSuggestion(context, provider, displayName),
-            backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-            labelStyle: TextStyle(
-              color: Theme.of(context).colorScheme.onSecondaryContainer,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          );
-        }).toList(),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: filteredSuggestions.map((suggestion) {
+            // Use edited name if available, otherwise capitalize original
+            final editedName = _editedMagicListNames[suggestion];
+            final displayName = editedName ?? (suggestion[0].toUpperCase() + suggestion.substring(1));
+            
+            return Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: ActionChip(
+                label: Text(
+                  displayName,
+                  style: const TextStyle(fontSize: 12),
+                ),
+                onPressed: () => _addQuickSuggestion(context, provider, displayName),
+                backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                labelStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.onSecondaryContainer,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
