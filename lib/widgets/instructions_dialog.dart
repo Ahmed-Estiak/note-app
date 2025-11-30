@@ -15,6 +15,7 @@ class InstructionsDialog extends StatelessWidget {
           const SizedBox(width: 8),
           const Text('Quick Info And Tips'),
         ],
+        
       ),
       content: SingleChildScrollView(
         child: Column(
