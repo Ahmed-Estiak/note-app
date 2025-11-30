@@ -216,6 +216,19 @@ class _ListsPageState extends State<ListsPage> {
         actionsPadding: const EdgeInsets.symmetric(horizontal: 8),
         actions: [
           IconButton(
+            icon: const Icon(Icons.feedback, size: 20),
+            tooltip: 'Send Feedback',
+            padding: const EdgeInsets.all(3),
+            constraints: const BoxConstraints(),
+            onPressed: () {
+              html.window.open(
+                'https://docs.google.com/forms/d/e/1FAIpQLSf0tA1aEXGlUy-Em1Y7EmC5SNX1q_SqeI8bWxQcW1--GFegsQ/viewform?usp=publish-editor',
+                '_blank',
+              );
+            },
+          ),
+          const SizedBox(width: 12),
+          IconButton(
             icon: const Icon(Icons.history, size: 20),
             tooltip: 'Trip History',
             padding: const EdgeInsets.all(3),
@@ -227,6 +240,7 @@ class _ListsPageState extends State<ListsPage> {
               );
             },
           ),
+          const SizedBox(width: 12),
           IconButton(
             icon: const Icon(Icons.help_outline, size: 20),
             tooltip: 'How to use # and *',
