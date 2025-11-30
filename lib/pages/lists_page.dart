@@ -31,7 +31,7 @@ class _ListsPageState extends State<ListsPage> {
   String? _previousListId;
   final Set<String> _deletedMagicListSuggestions = {};
   final Map<String, String> _editedMagicListNames = {};
-  bool _wasVisible = true; // Track visibility for navigation scroll fix
+  DateTime? _lastScrollTime; // Track when we last scrolled to prevent excessive scrolling
 
   @override
   void initState() {
@@ -47,25 +47,6 @@ class _ListsPageState extends State<ListsPage> {
     if (!provider.hasSeenInstructions) {
       await InstructionsDialog.show(context);
       await provider.markInstructionsAsSeen();
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_isIOS()) {
-      // Check if page just became visible
-      final isVisible = ModalRoute.of(context)?.isCurrent ?? false;
-      if (isVisible && !_wasVisible) {
-        // Just became visible - scroll to last empty bullet
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            final provider = context.read<GroceryProvider>();
-            _scrollToLastEmptyBullet(provider);
-          }
-        });
-      }
-      _wasVisible = isVisible;
     }
   }
 
@@ -178,7 +159,46 @@ class _ListsPageState extends State<ListsPage> {
     // Detect category change and scroll to bottom
     if (_previousListId != selectedList.id) {
       _previousListId = selectedList.id;
+      _lastScrollTime = null; // Reset on category change
       _scrollToBottom();
+    }
+
+    // On iOS: Scroll to last empty bullet when page becomes visible (after returning from dashboard)
+    if (_isIOS()) {
+      final now = DateTime.now();
+      final shouldScroll = _lastScrollTime == null || 
+          now.difference(_lastScrollTime!).inMilliseconds > 500; // Only scroll if last scroll was > 500ms ago
+      
+      if (shouldScroll) {
+        if (_scrollController.hasClients) {
+          final maxScroll = _scrollController.position.maxScrollExtent;
+          final currentScroll = _scrollController.position.pixels;
+          // If not at or near bottom (within 100px threshold), scroll to last empty bullet
+          if (maxScroll > 0 && (maxScroll - currentScroll) > 100) {
+            _lastScrollTime = now;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _scrollToLastEmptyBullet(provider);
+              }
+            });
+          }
+        } else {
+          // Scroll controller not ready yet, try again next build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _scrollController.hasClients) {
+              final maxScroll = _scrollController.position.maxScrollExtent;
+              final currentScroll = _scrollController.position.pixels;
+              final now2 = DateTime.now();
+              final shouldScroll2 = _lastScrollTime == null || 
+                  now2.difference(_lastScrollTime!).inMilliseconds > 500;
+              if (shouldScroll2 && maxScroll > 0 && (maxScroll - currentScroll) > 100) {
+                _lastScrollTime = now2;
+                _scrollToLastEmptyBullet(provider);
+              }
+            }
+          });
+        }
+      }
     }
 
     final expiringItems = provider.getExpiringSoonItems();
