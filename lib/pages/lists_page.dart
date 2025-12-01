@@ -227,7 +227,7 @@ class _ListsPageState extends State<ListsPage> {
               );
             },
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 6),
           IconButton(
             icon: const Icon(Icons.history, size: 20),
             tooltip: 'Trip History',
@@ -240,7 +240,7 @@ class _ListsPageState extends State<ListsPage> {
               );
             },
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 6),
           IconButton(
             icon: const Icon(Icons.help_outline, size: 20),
             tooltip: 'How to use # and *',
